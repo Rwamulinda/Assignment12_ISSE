@@ -6,7 +6,6 @@
 #include "clist.h"
 #include "Token.h"
 #include "Tokenize.h"
-#include "Tokenize.c"
 
 int main() {
     printf("Welcome to Plaid Shell!\n");
