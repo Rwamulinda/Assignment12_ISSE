@@ -1,7 +1,7 @@
 CFLAGS=-Wall -Werror -g -fsanitize=address
 TARGETS=plaidsh
-OBJS=clist.o tokenize.o
-HDRS=clist.h token.h tokenize.h
+OBJS=clist.o Tokenize.o
+HDRS=clist.h Token.h Tokenize.h
 LIBS=-lasan -lm -lreadline 
 
 
