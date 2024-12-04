@@ -3,6 +3,9 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "clist.h"
+#include "Token.h"
+
 int main() {
     printf("Welcome to Plaid Shell!\n");
 
