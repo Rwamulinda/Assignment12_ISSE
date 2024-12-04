@@ -14,8 +14,8 @@
 #include <ctype.h>
 
 #include "clist.h"
-#include "tokenize.h"
-#include "token.h"
+#include "Tokenize.h"
+#include "Token.h"
 #include <stddef.h>
 
 // Documented in .h file

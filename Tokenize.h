@@ -10,7 +10,7 @@
 #define _TOKENIZE_H_
 
 #include "clist.h"
-#include "token.h"
+#include "Token.h"
 #include <stddef.h>
 
 
