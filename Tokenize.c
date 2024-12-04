@@ -58,6 +58,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
         }
 
         Token token;
+        token.value = NULL; // Initialize to NULL
 
         // Handle words (general tokens, like commands or arguments)
         if (isalnum(input[i]) || input[i] == '-' || input[i] == '_')
@@ -67,9 +68,18 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             {
                 i++;
             }
+
             token.type = TOK_WORD;
-            token.value = 0; // Words don't have a value like numbers
-            strncpy(token.value, &input[start], i - start);
+            size_t length = i - start;
+            token.value = malloc(length + 1); // Allocate memory for the token value
+            if (!token.value)
+            {
+                snprintf(errmsg, errmsg_sz, "Memory allocation failed");
+                CL_free(tokens);
+                return NULL;
+            }
+            strncpy(token.value, &input[start], length);
+            token.value[length] = '\0'; // Null-terminate the string
         }
         // Handle quoted words
         else if (input[i] == '"')
@@ -88,8 +98,17 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             }
 
             token.type = TOK_QUOTED_WORD;
-            strncpy(token.value, &input[start], i - start);
-            i++; // Skip closing quote
+            size_t length = i - start;
+            token.value = malloc(length + 1); // Allocate memory for the token value
+            if (!token.value)
+            {
+                snprintf(errmsg, errmsg_sz, "Memory allocation failed");
+                CL_free(tokens);
+                return NULL;
+            }
+            strncpy(token.value, &input[start], length);
+            token.value[length] = '\0'; // Null-terminate the string
+            i++;                        // Skip closing quote
         }
         // Handle redirection and pipe characters
         else
@@ -110,7 +129,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 CL_free(tokens);
                 return NULL;
             }
-            token.value = 0; // Redirection and pipe tokens don't have a value
+            token.value = NULL; // Redirection and pipe tokens don't have a value
             i++;
         }
 
@@ -119,7 +138,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
     }
 
     // Add end-of-input token
-    Token end_token = {.type = TOK_END, .value = 0};
+    Token end_token = {.type = TOK_END, .value = NULL};
     CL_append(tokens, end_token);
 
     return tokens;
@@ -151,14 +170,17 @@ void TOK_consume(CList tokens)
     }
 }
 
-void printToken(int pos, CListElementType element, void* cb_data) {
-    if (element.type == TOK_WORD || element.type == TOK_QUOTED_WORD) {
+void printToken(int pos, CListElementType element, void *cb_data)
+{
+    if (element.type == TOK_WORD || element.type == TOK_QUOTED_WORD)
+    {
         printf("Position %d: Token type: %s, Text: %s\n", pos, TT_to_str(element.type), element.value);
-    } else {
+    }
+    else
+    {
         printf("Position %d: Token type: %s\n", pos, TT_to_str(element.type));
     }
 }
-
 
 // Documented in .h file
 void TOK_print(CList tokens)
