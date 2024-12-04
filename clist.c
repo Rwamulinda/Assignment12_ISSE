@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "clist.h"
-#include "token.h"
+#include "Token.h"
 
 
 #define DEBUG
