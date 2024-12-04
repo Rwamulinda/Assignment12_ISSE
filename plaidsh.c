@@ -9,6 +9,8 @@
 
 int main() {
     printf("Welcome to Plaid Shell!\n");
+    CList tokens = NULL;
+    char errmsg[256];
 
     while (1) {
         // Display the prompt
@@ -25,11 +27,12 @@ int main() {
             add_history(input);
         }
 
-        // Print the input back for debugging
-        printf("You entered: %s\n", input);
+        tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+        TOK_print(tokens);
 
         // Free the allocated memory
         free(input);
+
     }
 
     return 0;
