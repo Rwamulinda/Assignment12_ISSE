@@ -43,6 +43,34 @@ const char *TT_to_str(TokenType tt)
     __builtin_unreachable();
 }
 
+char handle_escape_sequence(char next_char, char *errmsg, size_t errmsg_sz)
+{
+    switch (next_char)
+    {
+    case 'n':
+        return '\n'; // New line
+    case 'r':
+        return '\r'; // Carriage return
+    case 't':
+        return '\t'; // Tab
+    case '"':
+        return '\"'; // Double quote
+    case '\\':
+        return '\\'; // Backslash
+    case ' ':
+        return ' '; // Space
+    case '|':
+        return '|'; // Pipe
+    case '<':
+        return '<'; // Less than
+    case '>':
+        return '>'; // Greater than
+    default:
+        snprintf(errmsg, errmsg_sz, "Unrecognized escape sequence: \\%c", next_char);
+        return '\0'; // Indicate an error
+    }
+}
+
 // Documented in .h file
 CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 {
@@ -60,33 +88,70 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
         Token token;
         token.value = NULL; // Initialize to NULL
 
-        // Handle words (general tokens, like commands or arguments)
+        // Handle words (including escaped characters)
         if (isalnum(input[i]) || input[i] == '-' || input[i] == '_')
         {
             size_t start = i;
-            while (isalnum(input[i]) || input[i] == '-' || input[i] == '_')
+            char temp[256]; // Temporary buffer for token value
+            size_t temp_idx = 0;
+
+            while (isalnum(input[i]) || input[i] == '-' || input[i] == '_' || input[i] == '\\')
             {
+                if (input[i] == '\\' && input[i + 1] != '\0')
+                {
+                    // Process escape sequence
+                    char escaped = handle_escape_sequence(input[++i], errmsg, errmsg_sz);
+                    if (escaped == '\0')
+                    {
+                        // Error in escape sequence
+                        CL_free(tokens);
+                        return NULL;
+                    }
+                    temp[temp_idx++] = escaped;
+                }
+                else
+                {
+                    temp[temp_idx++] = input[i];
+                }
                 i++;
             }
 
+            temp[temp_idx] = '\0'; // Null-terminate the temporary string
             token.type = TOK_WORD;
-            size_t length = i - start;
-            token.value = malloc(length + 1); // Allocate memory for the token value
+            token.value = malloc(strlen(temp) + 1); // Allocate memory for the token value
             if (!token.value)
             {
                 snprintf(errmsg, errmsg_sz, "Memory allocation failed");
                 CL_free(tokens);
                 return NULL;
             }
-            strncpy(token.value, &input[start], length);
-            token.value[length] = '\0'; // Null-terminate the string
+            strcpy(token.value, temp); // Copy temp into dynamically allocated token.value
         }
         // Handle quoted words
         else if (input[i] == '"')
         {
             size_t start = ++i;
+            char temp[256]; // Temporary buffer for quoted token value
+            size_t temp_idx = 0;
+
             while (input[i] != '"' && input[i] != '\0')
             {
+                if (input[i] == '\\' && input[i + 1] != '\0')
+                {
+                    // Process escape sequence inside quoted string
+                    char escaped = handle_escape_sequence(input[++i], errmsg, errmsg_sz);
+                    if (escaped == '\0')
+                    {
+                        // Error in escape sequence
+                        CL_free(tokens);
+                        return NULL;
+                    }
+                    temp[temp_idx++] = escaped;
+                }
+                else
+                {
+                    temp[temp_idx++] = input[i];
+                }
                 i++;
             }
 
@@ -97,18 +162,17 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 return NULL;
             }
 
+            temp[temp_idx] = '\0'; // Null-terminate the temporary string
             token.type = TOK_QUOTED_WORD;
-            size_t length = i - start;
-            token.value = malloc(length + 1); // Allocate memory for the token value
+            token.value = malloc(strlen(temp) + 1); // Allocate memory for the token value
             if (!token.value)
             {
                 snprintf(errmsg, errmsg_sz, "Memory allocation failed");
                 CL_free(tokens);
                 return NULL;
             }
-            strncpy(token.value, &input[start], length);
-            token.value[length] = '\0'; // Null-terminate the string
-            i++;                        // Skip closing quote
+            strcpy(token.value, temp); // Copy temp into dynamically allocated token.value
+            i++;                       // Skip closing quote
         }
         // Handle redirection and pipe characters
         else
