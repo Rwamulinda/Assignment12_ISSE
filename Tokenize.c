@@ -76,12 +76,6 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 {
     CList tokens = CL_new();
     size_t i = 0;
-    
-    // Check if the input is empty or contains only whitespace
-    if (input[i] == '\0') {
-        snprintf(errmsg, errmsg_sz, "No tokens found");
-        return tokens; // Return the empty token list
-    }
 
     while (input[i] != '\0')
     {
