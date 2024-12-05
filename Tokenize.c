@@ -91,7 +91,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
         // Handle words (including escaped characters)
         if (isalnum(input[i]) || input[i] == '-' || input[i] == '_')
         {
-            size_t start = i;
+            //size_t start = i;
             char temp[256]; // Temporary buffer for token value
             size_t temp_idx = 0;
 
