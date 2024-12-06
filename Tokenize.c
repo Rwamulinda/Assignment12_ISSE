@@ -72,7 +72,7 @@ char handle_escape_sequence(char next_char, char *errmsg, size_t errmsg_sz)
 }
 
 // This function checks if the current character marks the end of a word
-int is_at_end(const char current, const char next)
+int is_at_end(const char current)
 {
     // Check if it's one of the special characters (unescaped <, >, |, " or space)
     if (current == '<' || current == '>' || current == '|' || current == '"')
@@ -84,10 +84,6 @@ int is_at_end(const char current, const char next)
 
     // Check if we are at the end of the input string
     if (current == '\0')
-        return 1; // End of word
-
-    // Check if the next character is part of the word boundary
-    if (isspace(next) || next == '<' || next == '>' || next == '|')
         return 1; // End of word
 
     return 0; // Not at the end of the word yet
@@ -179,7 +175,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             char temp[256];
             size_t temp_idx = 0;
 
-            while (!is_at_end(input[i], input[i + 1])) // Use `is_at_end` to determine word boundaries
+            while (!is_at_end(input[i])) // Use `is_at_end` to determine word boundaries
             {
                 if (input[i] == '\\' && input[i + 1] != '\0')
                 {
