@@ -99,18 +99,17 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
     {
         if (isspace(input[i]))
         {
-            i++; // Skip whitespace
+            i++; 
             continue;
         }
 
-        Token token;
-        token.value = NULL; // Initialize to NULL
+        Token token = {0}; // Zero-initialize the entire token
 
         // Check for quoted words
         if (input[i] == '"')
         {
             size_t start = ++i;
-            char temp[256]; // Temporary buffer for quoted token value
+            char temp[256]; 
             size_t temp_idx = 0;
 
             while (input[i] != '"' && input[i] != '\0')
@@ -135,18 +134,19 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             if (input[i] == '\0')
             {
                 snprintf(errmsg, errmsg_sz, "Position %zu: Missing closing quote", start);
+                CL_free(tokens);
                 return NULL;
             }
 
             temp[temp_idx] = '\0';
             token.type = TOK_QUOTED_WORD;
-            token.value = malloc(strlen(temp) + 1);
+            token.value = strdup(temp);
             if (!token.value)
             {
                 snprintf(errmsg, errmsg_sz, "Memory allocation failed");
+                CL_free(tokens);
                 return NULL;
             }
-            strcpy(token.value, temp);
             i++; // Skip closing quote
         }
         // Check for special characters
@@ -173,8 +173,8 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             char temp[256];
             size_t temp_idx = 0;
 
-            while (!is_at_end(input[i]))
-            {
+            while (!is_at_end(input[i])) 
+            {   
                 if (input[i] == '\\')
                 {
                     // Special handling for backslash
@@ -182,7 +182,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                     {
                         // Backslash followed by space is always valid
                         temp[temp_idx++] = ' ';
-                        i += 2; // Skip backslash and space
+                        i += 2;  // Skip backslash and space
                         continue;
                     }
                     else if (input[i + 1] != '\0')
@@ -196,7 +196,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                             return NULL;
                         }
                         temp[temp_idx++] = escaped;
-                        i += 2; // Skip backslash and escaped char
+                        i += 2;  // Skip backslash and escaped char
                     }
                     else
                     {
@@ -215,17 +215,20 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 
             temp[temp_idx] = '\0'; // Null-terminate the string
             token.type = TOK_WORD;
-            token.value = malloc(strlen(temp) + 1);
+            token.value = strdup(temp);
             if (!token.value)
             {
                 snprintf(errmsg, errmsg_sz, "Memory allocation failed");
+                CL_free(tokens);
                 return NULL;
             }
-            strcpy(token.value, temp);
         }
 
-        // Add the token to the list
-        CL_append(tokens, token);
+        // Only append if a token was created
+        if (token.type != 0) 
+        {
+            CL_append(tokens, token);
+        }
     }
 
     // Add end-of-input token
