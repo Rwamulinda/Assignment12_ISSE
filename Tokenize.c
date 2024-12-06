@@ -190,7 +190,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 else
                 {
                     if(input[i + 1] == '\0') {
-                        snprintf(errmsg, errmsg_sz, "Unrecognized escape sequence: '", );
+                        snprintf(errmsg, errmsg_sz, "Unrecognized escape sequence: '" );
                         CL_free(tokens);
                         return NULL;
                     }
