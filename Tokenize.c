@@ -176,7 +176,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             size_t temp_idx = 0;
 
             while (!is_at_end(input[i])) // Use `is_at_end` to determine word boundaries
-            {
+            {   
                 if (input[i] == '\\' && input[i + 1] != '\0')
                 {
                     char escaped = handle_escape_sequence(input[++i], errmsg, errmsg_sz);
@@ -189,6 +189,11 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 }
                 else
                 {
+                    if(input[i + 1] == '\0') {
+                        snprintf(errmsg, errmsg_sz, "Unrecognized escape sequence: '", );
+                        CL_free(tokens);
+                        return NULL;
+                    }
                     temp[temp_idx++] = input[i];
                 }
                 i++;
