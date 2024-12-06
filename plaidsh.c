@@ -28,10 +28,21 @@ int main() {
         }
 
         tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+
+        if(tokens == NULL) {
+            fprintf(stderr, "%s\n", errmsg);
+            goto loop_end;
+        }
         TOK_print(tokens);
 
         // Free the allocated memory
         free(input);
+
+        loop_end:
+          free(input);
+          input = NULL;
+          CL_free(tokens);
+          tokens = NULL;
 
     }
 
