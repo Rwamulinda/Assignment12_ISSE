@@ -28,13 +28,7 @@ int main() {
         }
 
         tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-
-        if (tokens != NULL) {
-            TOK_print(tokens);
-        } else {
-            printf("Error: %s\n", errmsg);  // Optionally print the error message if tokenization failed
-        }
-        
+        TOK_print(tokens);
 
         // Free the allocated memory
         free(input);
