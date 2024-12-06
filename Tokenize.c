@@ -66,7 +66,7 @@ char handle_escape_sequence(char next_char, char *errmsg, size_t errmsg_sz)
     case '>':
         return '>'; // Greater than
     default:
-        snprintf(errmsg, errmsg_sz, "Illegal escape character \\%c", next_char);
+        snprintf(errmsg, errmsg_sz, "Illegal escape character\\%c", next_char);
         return '\0'; // Indicate an error
     }
 }
@@ -120,6 +120,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                     char escaped = handle_escape_sequence(input[++i], errmsg, errmsg_sz);
                     if (escaped == '\0')
                     {
+                        CL_free(tokens);
                         return NULL;
                     }
                     temp[temp_idx++] = escaped;
@@ -186,7 +187,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 else
                 {
                     if(input[i + 1] == '\0') {
-                        snprintf(errmsg, errmsg_sz, "Unrecognized escape sequence: '" );
+                        snprintf(errmsg, errmsg_sz, "Illegal escape character '" );
                         return NULL;
                     }
                     temp[temp_idx++] = input[i];
