@@ -66,7 +66,7 @@ char handle_escape_sequence(char next_char, char *errmsg, size_t errmsg_sz)
     case '>':
         return '>'; // Greater than
     default:
-        snprintf(errmsg, errmsg_sz, "Unrecognized escape sequence: \\%c", next_char);
+        snprintf(errmsg, errmsg_sz, "Illegal escape character \\%c", next_char);
         return '\0'; // Indicate an error
     }
 }
