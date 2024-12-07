@@ -99,58 +99,14 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
     {
         if (isspace(input[i]))
         {
-            i++; 
+            i++;
             continue;
         }
 
-        Token token = {0}; // Zero-initialize the entire token
+        Token token = {0};
 
-        // Check for quoted words
-        if (input[i] == '"')
-        {
-            size_t start = ++i;
-            char temp[256]; 
-            size_t temp_idx = 0;
-
-            while (input[i] != '"' && input[i] != '\0')
-            {
-                if (input[i] == '\\' && input[i + 1] != '\0')
-                {
-                    char escaped = handle_escape_sequence(input[++i], errmsg, errmsg_sz);
-                    if (escaped == '\0')
-                    {
-                        CL_free(tokens);
-                        return NULL;
-                    }
-                    temp[temp_idx++] = escaped;
-                }
-                else
-                {
-                    temp[temp_idx++] = input[i];
-                }
-                i++;
-            }
-
-            if (input[i] == '\0')
-            {
-                snprintf(errmsg, errmsg_sz, "Position %zu: Missing closing quote", start);
-                CL_free(tokens);
-                return NULL;
-            }
-
-            temp[temp_idx] = '\0';
-            token.type = TOK_QUOTED_WORD;
-            token.value = strdup(temp);
-            if (!token.value)
-            {
-                snprintf(errmsg, errmsg_sz, "Memory allocation failed");
-                CL_free(tokens);
-                return NULL;
-            }
-            i++; // Skip closing quote
-        }
-        // Check for special characters
-        else if (input[i] == '<' || input[i] == '>' || input[i] == '|')
+        // Handle special characters first
+        if (input[i] == '<' || input[i] == '>' || input[i] == '|')
         {
             switch (input[i])
             {
@@ -165,68 +121,78 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 break;
             }
             token.value = NULL;
+            CL_append(tokens, token);
             i++;
+            continue;
         }
-        // Handle words (including escaped characters)
-        else
+
+        // Check for quoted words or start of a word
+        char temp[256];
+        size_t temp_idx = 0;
+        int is_quoted = 0;
+
+        if (input[i] == '"')
         {
-            char temp[256];
-            size_t temp_idx = 0;
+            is_quoted = 1;
+            i++; // Skip opening quote
+        }
 
-            while (!is_at_end(input[i])) 
-            {   
-                if (input[i] == '\\')
-                {
-                    // Special handling for backslash
-                    if (input[i + 1] == ' ')
-                    {
-                        // Backslash followed by space is always valid
-                        temp[temp_idx++] = ' ';
-                        i += 2;  // Skip backslash and space
-                        continue;
-                    }
-                    else if (input[i + 1] != '\0')
-                    {
-                        char escaped = handle_escape_sequence(input[i + 1], errmsg, errmsg_sz);
-                        if (escaped == '\0')
-                        {
-                            // Illegal escape character
-                            snprintf(errmsg, errmsg_sz, "Illegal escape character '\\%c'", input[i + 1]);
-                            CL_free(tokens);
-                            return NULL;
-                        }
-                        temp[temp_idx++] = escaped;
-                        i += 2;  // Skip backslash and escaped char
-                    }
-                    else
-                    {
-                        // Lone backslash at end of input is illegal
-                        snprintf(errmsg, errmsg_sz, "Illegal lone backslash at end of input");
-                        CL_free(tokens);
-                        return NULL;
-                    }
-                }
-                else
-                {
-                    temp[temp_idx++] = input[i];
-                    i++;
-                }
-            }
+        while (1)
+        {
+            // End of input or word conditions
+            if (input[i] == '\0' ||
+                (!is_quoted && (input[i] == '<' || input[i] == '>' || input[i] == '|' || isspace(input[i]))))
+                break;
 
-            temp[temp_idx] = '\0'; // Null-terminate the string
-            token.type = TOK_WORD;
-            token.value = strdup(temp);
-            if (!token.value)
+            // Handle quote termination for quoted words
+            if (is_quoted && input[i] == '"')
             {
-                snprintf(errmsg, errmsg_sz, "Memory allocation failed");
-                CL_free(tokens);
-                return NULL;
+                i++;
+                break;
+            }
+
+            // Handle backslash
+            if (input[i] == '\\')
+            {
+                if (input[i + 1] == '\0')
+                {
+                    snprintf(errmsg, errmsg_sz, "Illegal lone backslash at end of input");
+                    CL_free(tokens);
+                    return NULL;
+                }
+
+                // Special case for space after backslash
+                if (input[i + 1] == ' ')
+                {
+                    temp[temp_idx++] = ' ';
+                    i += 2;
+                    continue;
+                }
+
+                // Handle other escape sequences
+                char escaped = handle_escape_sequence(input[i + 1], errmsg, errmsg_sz);
+                if (escaped == '\0')
+                {
+                    snprintf(errmsg, errmsg_sz, "Illegal escape character '\\%c'", input[i + 1]);
+                    CL_free(tokens);
+                    return NULL;
+                }
+                temp[temp_idx++] = escaped;
+                i += 2;
+            }
+            else
+            {
+                temp[temp_idx++] = input[i];
+                i++;
             }
         }
 
-        // Only append if a token was created
-        if (token.type != 0) 
+        // Create token if we have content
+        if (temp_idx > 0)
         {
+            temp[temp_idx] = '\0';
+            token.type = is_quoted ? TOK_QUOTED_WORD : TOK_WORD;
+            token.value = strdup(temp);
             CL_append(tokens, token);
         }
     }
