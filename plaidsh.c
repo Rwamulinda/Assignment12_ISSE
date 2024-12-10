@@ -6,12 +6,7 @@
 #include "Token.h"
 #include "Tokenize.h"
 #include "pipeline.h"
-#include  "parse.h"
-
-
-// Function prototypes
-Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz);
-int execute_pipeline(Pipeline *pipeline);
+#include "parse.h"
 
 int main() {
     printf("Welcome to Plaid Shell!\n");
