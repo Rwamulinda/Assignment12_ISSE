@@ -1,9 +1,9 @@
-// pipeline.c
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h> 
-#include <sys/wait.h> // For waitpid()
+#include <fcntl.h>
+#include <sys/wait.h>  // For waitpid()
+#include <stdlib.h>
 #include "pipeline.h"
 
 // Create a new pipeline
@@ -21,6 +21,7 @@ Pipeline *pipeline_create() {
 
     return pipeline;
 }
+
 // Execute the pipeline (fork and exec each command, handle redirection)
 int execute_pipeline(Pipeline *pipeline) {
     if (!pipeline || pipeline->command_count == 0) {
@@ -106,6 +107,7 @@ int execute_pipeline(Pipeline *pipeline) {
 
     return 0;
 }
+
 // Destroy a pipeline and free all memory
 void pipeline_destroy(Pipeline *pipeline) {
     if (!pipeline) return;
