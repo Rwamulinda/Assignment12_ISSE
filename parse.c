@@ -6,7 +6,8 @@
 #include "parse.h"
 
 // Documented in .h file
-Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz) {
+Pipeline* parse_tokens(CList *tokens, char *errmsg, size_t errmsg_sz);
+
     // Initialize a new pipeline to hold commands
     Pipeline *pipeline = pipeline_create();
     if (!pipeline) {
