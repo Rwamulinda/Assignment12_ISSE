@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h> 
+#include <sys/wait.h> // For waitpid()
 #include "pipeline.h"
 
 // Create a new pipeline
