@@ -55,7 +55,7 @@ int main() {
         // Free the allocated memory
         free(input);
         CL_free(tokens);
-        pipeline_free(pipeline);
+        //pipeline_free(pipeline);
         tokens = NULL;
     }
 
