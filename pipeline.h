@@ -34,5 +34,5 @@ int pipeline_add_command(Pipeline *pipeline, Command *command);
 void pipeline_set_input_file(Pipeline *pipeline, const char *filename);
 void pipeline_set_output_file(Pipeline *pipeline, const char *filename);
 void pipeline_print(Pipeline *pipeline);  // Optional: for debugging
-
+int pipeline_execute(Pipeline *pipeline);
 #endif // PIPELINE_H

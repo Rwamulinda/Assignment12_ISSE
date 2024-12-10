@@ -1,6 +1,7 @@
 // pipeline.c
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "pipeline.h"
 
 // Create a new pipeline
@@ -18,7 +19,91 @@ Pipeline *pipeline_create() {
 
     return pipeline;
 }
+// Execute the pipeline (fork and exec each command, handle redirection)
+int execute_pipeline(Pipeline *pipeline) {
+    if (!pipeline || pipeline->command_count == 0) {
+        return -1;  // No pipeline or empty pipeline
+    }
 
+    int pipe_fds[2];
+    int prev_fd = -1;  // No previous file descriptor (stdin for the first command)
+
+    // Iterate through the commands in the pipeline
+    PipelineNode *current = pipeline->head;
+    while (current) {
+        // Create a pipe for each command except the last
+        if (current->next) {
+            if (pipe(pipe_fds) == -1) {
+                perror("pipe");
+                return -1;
+            }
+        }
+
+        // Fork to create a new process for each command
+        pid_t pid = fork();
+        if (pid == -1) {
+            perror("fork");
+            return -1;
+        }
+
+        if (pid == 0) {  // Child process
+            // Redirect input if there is a previous command
+            if (prev_fd != -1) {
+                if (dup2(prev_fd, STDIN_FILENO) == -1) {
+                    perror("dup2 input");
+                    exit(EXIT_FAILURE);
+                }
+                close(prev_fd);
+            }
+
+            // Redirect output if there is a next command
+            if (current->next) {
+                if (dup2(pipe_fds[1], STDOUT_FILENO) == -1) {
+                    perror("dup2 output");
+                    exit(EXIT_FAILURE);
+                }
+            } else if (pipeline->output_file) {  // If it's the last command and has an output file
+                int output_fd = open(pipeline->output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (output_fd == -1) {
+                    perror("open output file");
+                    exit(EXIT_FAILURE);
+                }
+                if (dup2(output_fd, STDOUT_FILENO) == -1) {
+                    perror("dup2 output file");
+                    exit(EXIT_FAILURE);
+                }
+                close(output_fd);
+            }
+
+            // Execute the command
+            execvp(current->command->args[0], current->command->args);
+            perror("execvp");  // If execvp fails
+            exit(EXIT_FAILURE);
+        } else {  // Parent process
+            // Close the write end of the pipe in the parent
+            if (current->next) {
+                close(pipe_fds[1]);
+            }
+
+            // Wait for the child to finish if it's the last command
+            if (!current->next) {
+                waitpid(pid, NULL, 0);
+            }
+
+            // Close the previous file descriptor after use
+            if (prev_fd != -1) {
+                close(prev_fd);
+            }
+
+            // Move to the next command
+            prev_fd = pipe_fds[0];
+        }
+
+        current = current->next;
+    }
+
+    return 0;
+}
 // Destroy a pipeline and free all memory
 void pipeline_destroy(Pipeline *pipeline) {
     if (!pipeline) return;
