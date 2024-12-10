@@ -12,6 +12,6 @@
  * @param errmsg_sz Size of error message buffer
  * @return Pointer to created Pipeline, or NULL if parsing fails
  */
-Pipeline* parse_tokens(CList *tokens, char *errmsg, size_t errmsg_sz);
+Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz);
 
 #endif // PARSE_H

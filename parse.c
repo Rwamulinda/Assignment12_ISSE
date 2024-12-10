@@ -6,7 +6,7 @@
 #include "parse.h"
 #include "Tokenize.h"
 
-Pipeline *parse_tokens(CList *tokens, char *errmsg, size_t errmsg_sz)
+Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
 {
   // Create a new pipeline
   Pipeline *pipeline = pipeline_create();
