@@ -6,6 +6,7 @@
 #include "Token.h"
 #include "Tokenize.h"
 #include "pipeline.h"
+#include  "parse.h"
 
 
 // Function prototypes
