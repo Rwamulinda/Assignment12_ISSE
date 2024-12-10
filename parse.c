@@ -5,36 +5,36 @@
 #include "pipeline.h"
 #include "parse.h"
 
-// The implementation of parse_tokens that we discussed earlier would go here
-// Essentially the same code from the previous parser implementation artifact
-// But now with the function signature matching parse.h
-
+// Documented in .h file
 Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz) {
+    // Initialize a new pipeline to hold commands
     Pipeline *pipeline = pipeline_create();
     if (!pipeline) {
         snprintf(errmsg, errmsg_sz, "Could not create pipeline");
         return NULL;
     }
 
-    // Track input/output redirection
+    // Flags to check if input/output redirection is handled
     int input_redirected = 0;
     int output_redirected = 0;
 
+    // Initialize a current command
     Command current_command = {0};
     current_command.args = malloc(sizeof(char*) * 10);  // Initial allocation
     current_command.arg_capacity = 10;
     current_command.arg_count = 0;
 
+    // Loop through tokens and parse
     while (TOK_next_type(tokens) != TOK_END) {
-        TokenType current_type = TOK_next_type(tokens);
         Token current_token = TOK_next(tokens);
+        TokenType current_type = current_token.type;
 
         switch (current_type) {
             case TOK_WORD:
             case TOK_QUOTED_WORD:
-                // Add argument to current command
+                // Add argument to the current command
                 current_command.args[current_command.arg_count++] = strdup(current_token.value);
-                
+
                 // Reallocate if needed
                 if (current_command.arg_count >= current_command.arg_capacity) {
                     current_command.arg_capacity *= 2;
@@ -49,7 +49,7 @@ Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz) {
                     snprintf(errmsg, errmsg_sz, "Multiple input redirections not allowed");
                     return NULL;
                 }
-                TOK_consume(tokens);
+                TOK_consume(tokens);  // Consume '<'
                 if (TOK_next_type(tokens) != TOK_WORD) {
                     snprintf(errmsg, errmsg_sz, "Expected filename after input redirection");
                     return NULL;
@@ -64,7 +64,7 @@ Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz) {
                     snprintf(errmsg, errmsg_sz, "Multiple output redirections not allowed");
                     return NULL;
                 }
-                TOK_consume(tokens);
+                TOK_consume(tokens);  // Consume '>'
                 if (TOK_next_type(tokens) != TOK_WORD) {
                     snprintf(errmsg, errmsg_sz, "Expected filename after output redirection");
                     return NULL;
@@ -74,13 +74,12 @@ Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz) {
                 break;
 
             case TOK_PIPE:
-                // Complete current command and start a new one
+                // Complete the current command and start a new one
                 if (current_command.arg_count > 0) {
-                    // Null-terminate args
                     current_command.args[current_command.arg_count] = NULL;
                     pipeline_add_command(pipeline, &current_command);
-                    
-                    // Reset current command
+
+                    // Reset the current command
                     memset(&current_command, 0, sizeof(Command));
                     current_command.args = malloc(sizeof(char*) * 10);
                     current_command.arg_capacity = 10;
@@ -92,10 +91,11 @@ Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz) {
                 break;
         }
 
+        // Consume the current token and move to the next one
         TOK_consume(tokens);
     }
 
-    // Add the last command if not empty
+    // Add the last command if it contains arguments
     if (current_command.arg_count > 0) {
         current_command.args[current_command.arg_count] = NULL;
         pipeline_add_command(pipeline, &current_command);

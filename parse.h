@@ -5,7 +5,16 @@
 #include "pipeline.h"
 
 /**
- * Parse tokens into a pipeline structure
+ * Parse tokens into a pipeline structure.
+ *
+ * This function processes a list of tokens and constructs a Pipeline that
+ * contains commands and handles input/output redirection and piping.
+ * It recognizes the following token types:
+ * - TOK_WORD
+ * - TOK_QUOTED_WORD
+ * - TOK_LESSTHAN (input redirection)
+ * - TOK_GREATERTHAN (output redirection)
+ * - TOK_PIPE (pipe between commands)
  * 
  * @param tokens List of tokens to parse
  * @param errmsg Buffer to store error message if parsing fails

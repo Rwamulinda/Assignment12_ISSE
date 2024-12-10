@@ -7,6 +7,7 @@
 #include "Tokenize.h"
 #include "pipeline.h"
 
+
 // Function prototypes
 Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz);
 int execute_pipeline(Pipeline *pipeline);
