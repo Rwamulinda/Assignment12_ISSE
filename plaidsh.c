@@ -7,6 +7,7 @@
 #include "Tokenize.h"
 #include "pipeline.h"
 #include "parse.h"
+#include "ast.h"
 
 int main() {
     printf("Welcome to Plaid Shell!\n");
