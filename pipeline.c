@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include "pipeline.h"
+#include "ast.h"
 
 // Function to handle built-in commands
 int handle_builtin_commands(char *command, char **args) {
