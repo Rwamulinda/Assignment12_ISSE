@@ -20,7 +20,9 @@ typedef struct Pipeline {
 
 // Abstract Syntax Tree (AST) node
 typedef struct ASTNode {
-    Pipeline *pipeline;    // Pointer to the pipeline
+    Pipeline *pipeline;   
+    char *command;        // Valid if type == COMMAND_NODE
+    char **args;  // Pointer to the pipeline
     struct ASTNode *next;  // Pointer to the next AST node
 } ASTNode;
 
