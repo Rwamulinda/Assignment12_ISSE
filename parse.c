@@ -1,144 +1,97 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include "clist.h"
-#include "Token.h"
-#include "pipeline.h"
 #include "parse.h"
 #include "Tokenize.h"
+#include "pipeline.h"
+#include "ast.h"
 
 Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
 {
-  // Create a new pipeline
-  Pipeline *pipeline = pipeline_create();
-  if (!pipeline)
-  {
-    snprintf(errmsg, errmsg_sz, "Could not create pipeline");
-    return NULL;
-  }
+    Pipeline *pipeline = NULL;
+    Pipeline *current_pipeline = NULL;
+    Command *current_command = NULL;
 
-  // Initialize a command to track current command being built
-  Command current_command = {0};
-  current_command.args = malloc(sizeof(char *) * 10); // Initial allocation
-  current_command.arg_capacity = 10;
-  current_command.arg_count = 0;
-
-  // Flags to track input/output redirection
-  int input_redirected = 0;
-  int output_redirected = 0;
-
-  // Loop through tokens until we reach the end
-  while (TOK_next_type(tokens) != TOK_END)
-  {
-    Token current_token = TOK_next(tokens);
-    TokenType current_type = current_token.type;
-
-    switch (current_type)
+    while (CL_length(tokens) > 0)
     {
-    case TOK_WORD:
-    case TOK_QUOTED_WORD:
-      // Add argument to the current command
-      if (current_command.arg_count >= current_command.arg_capacity)
-      {
-        current_command.arg_capacity *= 2;
-        current_command.args = realloc(current_command.args,
-                                       sizeof(char *) * current_command.arg_capacity);
-      }
-      current_command.args[current_command.arg_count++] = strdup(current_token.value);
-      break;
+        Token token = TOK_next(tokens);
+        TOK_consume(tokens);
 
-    case TOK_LESSTHAN:
-      // Input redirection
-      if (input_redirected)
-      {
-        snprintf(errmsg, errmsg_sz, "Multiple input redirections not allowed");
-        goto error_cleanup;
-      }
-      TOK_consume(tokens); // Consume '<'
-
-      if (TOK_next_type(tokens) != TOK_WORD)
-      {
-        snprintf(errmsg, errmsg_sz, "Expected filename after input redirection");
-        goto error_cleanup;
-      }
-
-      pipeline_set_input_file(pipeline, TOK_next(tokens).value);
-      input_redirected = 1;
-      break;
-
-    case TOK_GREATERTHAN:
-      // Output redirection
-      if (output_redirected)
-      {
-        snprintf(errmsg, errmsg_sz, "Multiple output redirections not allowed");
-        goto error_cleanup;
-      }
-      TOK_consume(tokens); // Consume '>'
-
-      if (TOK_next_type(tokens) != TOK_WORD)
-      {
-        snprintf(errmsg, errmsg_sz, "Expected filename after output redirection");
-        goto error_cleanup;
-      }
-
-      pipeline_set_output_file(pipeline, TOK_next(tokens).value);
-      output_redirected = 1;
-      break;
-
-    case TOK_PIPE:
-      // Complete the current command and start a new one
-      if (current_command.arg_count > 0)
-      {
-        current_command.args[current_command.arg_count] = NULL;
-
-        // Add command to pipeline
-        if (!pipeline_add_command(pipeline, &current_command))
+        // If token is a word or quoted word, it's part of a command
+        if (token.type == TOK_WORD || token.type == TOK_QUOTED_WORD)
         {
-          snprintf(errmsg, errmsg_sz, "Failed to add command to pipeline");
-          goto error_cleanup;
+            // Start a new command if this is the first token
+            if (current_command == NULL)
+            {
+                current_command = (Command *)malloc(sizeof(Command));
+                current_command->command = strdup(token.value);
+                current_command->arguments = CL_new();
+            }
+            else
+            {
+                // Add token to arguments of the current command
+                CL_append(current_command->arguments, token);
+            }
         }
+        // If token is a pipe, connect the command and start a new command
+        else if (token.type == TOK_PIPE)
+        {
+            if (current_command != NULL)
+            {
+                // Add the current command to the pipeline
+                Pipeline *new_pipeline = (Pipeline *)malloc(sizeof(Pipeline));
+                new_pipeline->command = current_command;
+                new_pipeline->next = NULL;
 
-        // Reset the current command
-        memset(&current_command, 0, sizeof(Command));
-        current_command.args = malloc(sizeof(char *) * 10);
-        current_command.arg_capacity = 10;
-        current_command.arg_count = 0;
-      }
-      break;
-
-    default:
-      break;
+                if (pipeline == NULL)
+                {
+                    pipeline = new_pipeline;
+                }
+                else
+                {
+                    current_pipeline->next = new_pipeline;
+                }
+                current_pipeline = new_pipeline;
+            }
+            current_command = NULL; // Reset current command for the next part of the pipeline
+        }
+        // Handle redirection (if needed)
+        else if (token.type == TOK_LESSTHAN || token.type == TOK_GREATERTHAN)
+        {
+            // Handle input/output redirection logic here
+            // For example, associate redirection token with the current command
+        }
     }
 
-    // Consume the current token
-    TOK_consume(tokens);
-  }
-
-  // Add the last command if it contains arguments
-  if (current_command.arg_count > 0)
-  {
-    current_command.args[current_command.arg_count] = NULL;
-    if (!pipeline_add_command(pipeline, &current_command))
+    // Finalize the last command in the pipeline
+    if (current_command != NULL)
     {
-      snprintf(errmsg, errmsg_sz, "Failed to add final command to pipeline");
-      goto error_cleanup;
+        Pipeline *new_pipeline = (Pipeline *)malloc(sizeof(Pipeline));
+        new_pipeline->command = current_command;
+        new_pipeline->next = NULL;
+
+        if (pipeline == NULL)
+        {
+            pipeline = new_pipeline;
+        }
+        else
+        {
+            current_pipeline->next = new_pipeline;
+        }
     }
-  }
-  else
-  {
-    // Free the last command's args if no command was added
-    free(current_command.args);
-  }
 
-  return pipeline;
+    return pipeline;
+}
 
-error_cleanup:
-  // Clean up allocated memory in case of error
-  for (int i = 0; i < current_command.arg_count; i++)
-  {
-    free(current_command.args[i]);
-  }
-  free(current_command.args);
-  pipeline_destroy(pipeline);
-  return NULL;
+void free_pipeline(Pipeline *pipeline)
+{
+    while (pipeline != NULL)
+    {
+        Pipeline *next = pipeline->next;
+        free(pipeline->command->command);
+        CL_free(pipeline->command->arguments);
+        free(pipeline->command);
+        free(pipeline);
+        pipeline = next;
+    }
 }

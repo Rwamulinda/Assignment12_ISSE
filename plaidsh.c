@@ -2,15 +2,15 @@
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-
 #include "clist.h"
 #include "Token.h"
 #include "Tokenize.h"
+#include "pipeline.h"
+#include "parse.h"
 
 int main() {
     printf("Welcome to Plaid Shell!\n");
-    CList tokens = NULL;
-    char errmsg[256];
+    char errmsg[256]; // Buffer for error messages
 
     while (1) {
         // Display the prompt
@@ -28,18 +28,31 @@ int main() {
         }
 
         // Tokenize the input
-        tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-
-        // If tokens is NULL, skip printing and move to the next loop iteration
-        if (tokens != NULL) {
-            TOK_print(tokens);
-        } else {
-            printf("Error: %s\n", errmsg);  // Optionally print the error message if tokenization failed
+        CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+        if (tokens == NULL) {
+            fprintf(stderr, "Tokenization error: %s\n", errmsg);
+            free(input);
+            continue;
         }
 
-        // Free the allocated memory for input
-        free(input);
+        // Parse tokens into a pipeline
+        Pipeline *pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
+        if (pipeline == NULL) {
+            fprintf(stderr, "Parsing error: %s\n", errmsg);
+            CL_free(tokens);
+            free(input);
+            continue;
+        }
 
+        // Execute the pipeline (implementation should be in pipeline.c)
+        if (!execute_pipeline(pipeline, errmsg, sizeof(errmsg))) {
+            fprintf(stderr, "Execution error: %s\n", errmsg);
+        }
+
+        // Free allocated memory
+        free(input);
+        CL_free(tokens);
+        free_pipeline(pipeline);
     }
 
     return 0;

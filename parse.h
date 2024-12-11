@@ -1,17 +1,28 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-#include "clist.h"
+#include "Tokenize.h"
 #include "pipeline.h"
+#include "ast.h"
 
-/**
- * Parse tokens into a pipeline structure
- * 
- * @param tokens List of tokens to parse
- * @param errmsg Buffer to store error message if parsing fails
- * @param errmsg_sz Size of error message buffer
- * @return Pointer to created Pipeline, or NULL if parsing fails
- */
-Pipeline* parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz);
+// Representation of a single command
+typedef struct Command
+{
+    char *command;   // The command (e.g., "cat")
+    CList arguments; // List of arguments (e.g., ["file1.txt"])
+} Command;
 
-#endif // PARSE_H
+// Representation of the entire pipeline
+typedef struct Pipeline
+{
+    Command *command;      // A command
+    struct Pipeline *next; // Next command in the pipeline
+} Pipeline;
+
+// Function to parse a list of tokens into a pipeline
+Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz);
+
+// Helper functions
+void free_pipeline(Pipeline *pipeline);
+
+#endif

@@ -1,7 +1,7 @@
 CFLAGS = -Wall -Werror -g -fsanitize=address
 TARGETS = plaidsh
-OBJS = clist.o Tokenize.o pipeline.o parse.o plaidsh.o
-HDRS = clist.h Token.h Tokenize.h pipeline.h
+OBJS = clist.o Tokenize.o pipeline.o parse.o ast.o plaidsh.o  # Added ast.o
+HDRS = clist.h Token.h Tokenize.h pipeline.h ast.h  # Added ast.h
 LIBS = -lasan -lm -lreadline
 
 all: $(TARGETS)
@@ -23,7 +23,10 @@ pipeline.o: pipeline.c pipeline.h Token.h
 parse.o: parse.c parse.h Token.h pipeline.h
 	gcc -c $(CFLAGS) $< -o $@
 
-plaidsh.o: plaidsh.c clist.h Token.h Tokenize.h pipeline.h
+ast.o: ast.c ast.h  # Added a rule for ast.o
+	gcc -c $(CFLAGS) $< -o $@
+
+plaidsh.o: plaidsh.c clist.h Token.h Tokenize.h pipeline.h ast.h  # Added ast.h
 	gcc -c $(CFLAGS) $< -o $@
 
 clean:
