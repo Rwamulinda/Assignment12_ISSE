@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+
 #include "clist.h"
 #include "Token.h"
 #include "Tokenize.h"
-#include "pipeline.h"
-#include "parse.h"
 
 int main() {
     printf("Welcome to Plaid Shell!\n");
@@ -28,31 +27,19 @@ int main() {
             add_history(input);
         }
 
-        // Tokenize input
+        // Tokenize the input
         tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-        if (tokens == NULL) {
-            fprintf(stderr, "%s\n", errmsg);
-            free(input);
-            continue;
+
+        // If tokens is NULL, skip printing and move to the next loop iteration
+        if (tokens != NULL) {
+            TOK_print(tokens);
+        } else {
+            printf("Error: %s\n", errmsg);  // Optionally print the error message if tokenization failed
         }
 
-        // Parse tokens into pipeline
-        Pipeline *pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
-        if (pipeline == NULL) {
-            fprintf(stderr, "%s\n", errmsg);
-            CL_free(tokens);
-            free(input);
-            continue;
-        }
-
-        // Execute pipeline
-        execute_pipeline(pipeline);
-
-        // Free the allocated memory
+        // Free the allocated memory for input
         free(input);
-        CL_free(tokens);
-        //pipeline_free(pipeline);
-        tokens = NULL;
+
     }
 
     return 0;
