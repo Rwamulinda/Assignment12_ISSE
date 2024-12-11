@@ -97,6 +97,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 
     while (input[i] != '\0')
     {
+        // Skip whitespace
         if (isspace(input[i]))
         {
             i++;
@@ -126,30 +127,65 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             continue;
         }
 
-        // Check for quoted words or start of a word
+        // Handle words, including special cases with quotes
         char temp[256];
         size_t temp_idx = 0;
         int is_quoted = 0;
+        int had_quote = 0;
 
-        if (input[i] == '"')
-        {
-            is_quoted = 1;
-            i++; // Skip opening quote
-        }
-
+        // Check for words with or without quotes
         while (1)
         {
+            // Handle quoted sections
+            if (input[i] == '"')
+            {
+                // If we have a word started and then a quote, split into two tokens
+                if (temp_idx > 0 && !is_quoted)
+                {
+                    temp[temp_idx] = '\0';
+                    token.type = TOK_WORD;
+                    token.value = strdup(temp);
+                    CL_append(tokens, token);
+                    
+                    // Reset for next token
+                    temp_idx = 0;
+                    memset(temp, 0, sizeof(temp));
+                }
+
+                // Start or end of a quoted section
+                if (!is_quoted)
+                {
+                    is_quoted = 1;
+                    had_quote = 1;
+                    i++; // Skip opening quote
+                    continue;
+                }
+                else
+                {
+                    // End of quoted section
+                    is_quoted = 0;
+                    i++; // Skip closing quote
+                    
+                    // Create quoted word token if we have content
+                    if (temp_idx > 0)
+                    {
+                        temp[temp_idx] = '\0';
+                        token.type = TOK_QUOTED_WORD;
+                        token.value = strdup(temp);
+                        CL_append(tokens, token);
+                        
+                        // Reset for next token
+                        temp_idx = 0;
+                        memset(temp, 0, sizeof(temp));
+                    }
+                    break;
+                }
+            }
+
             // End of input or word conditions
             if (input[i] == '\0' ||
                 (!is_quoted && (input[i] == '<' || input[i] == '>' || input[i] == '|' || isspace(input[i]))))
                 break;
-
-            // Handle quote termination for quoted words
-            if (is_quoted && input[i] == '"')
-            {
-                i++;
-                break;
-            }
 
             // Handle backslash
             if (input[i] == '\\')
@@ -191,7 +227,17 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
         if (temp_idx > 0)
         {
             temp[temp_idx] = '\0';
-            token.type = is_quoted ? TOK_QUOTED_WORD : TOK_WORD;
+            
+            // Determine token type
+            if (is_quoted || had_quote)
+            {
+                token.type = TOK_QUOTED_WORD;
+            }
+            else
+            {
+                token.type = TOK_WORD;
+            }
+            
             token.value = strdup(temp);
             CL_append(tokens, token);
         }
