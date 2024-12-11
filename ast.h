@@ -1,6 +1,9 @@
 #ifndef AST_H
 #define AST_H
 
+// Include necessary headers
+#include <stddef.h>
+
 // Structure to represent a single command
 typedef struct Command {
     char **args;           // Array of command arguments (strings)
@@ -14,6 +17,12 @@ typedef struct Pipeline {
     char *input_file;      // Input file (default is stdin)
     char *output_file;     // Output file (default is stdout)
 } Pipeline;
+
+// Abstract Syntax Tree (AST) node
+typedef struct ASTNode {
+    Pipeline *pipeline;    // Pointer to the pipeline
+    struct ASTNode *next;  // Pointer to the next AST node
+} ASTNode;
 
 // Function prototypes for managing the pipeline and commands
 Command *create_command();                  // Create a new command
