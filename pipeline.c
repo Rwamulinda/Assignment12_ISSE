@@ -11,35 +11,41 @@
 // Function to handle built-in commands
 int handle_builtin_commands(char *command, char **args)
 {
-    if (strcmp(command, "cd") == 0)
+    if (args != NULL && command != NULL)
     {
-        // Handle `cd` (change directory)
-        if (args[1] == NULL)
+        if (strcmp(command, "cd") == 0)
         {
-            fprintf(stderr, "cd: missing argument\n");
-            return 1;
+            // Handle `cd` (change directory)
+            if (args[1] == NULL)
+            {
+                fprintf(stderr, "cd: missing argument\n");
+                return 1;
+            }
+            if (chdir(args[1]) != 0)
+            {
+                perror("cd");
+                return 1;
+            }
+            return 0;
         }
-        if (chdir(args[1]) != 0)
+        else if (strcmp(command, "exit") == 0)
         {
-            perror("cd");
-            return 1;
+            // Handle `exit` (exit the shell)
+            exit(0);
         }
-        return 0;
-    }
-    else if (strcmp(command, "exit") == 0)
-    {
-        // Handle `exit` (exit the shell)
-        exit(0);
-    }
-    else if (strcmp(command, "echo") == 0)
-    {
-        // Handle `echo` (print arguments)
-        for (int i = 1; args[i] != NULL; i++)
+        else if (strcmp(command, "echo") == 0)
         {
-            printf("%s ", args[i]);
+            // Handle `echo` (print arguments)
+            if (args != NULL)
+            {
+                for (int i = 1; args[i] != NULL; i++)
+                {
+                    printf("%s ", args[i]);
+                }
+                printf("\n");
+            }
+            return 0;
         }
-        printf("\n");
-        return 0;
     }
     return -1; // Return -1 if not a built-in command
 }
@@ -54,11 +60,14 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size)
     while (current != NULL)
     {
         // Check if the current command is a built-in command
-        if (handle_builtin_commands(current->command->command, current->command->args) == 0)
+        if (current != NULL && current->command != NULL)
         {
-            // If it's a built-in, just execute it directly
-            current = current->next; // Move to the next command in the pipeline
-            continue;
+            if (handle_builtin_commands(current->command->command, current->command->args) == 0)
+            {
+                // If it's a built-in, just execute it directly
+                current = current->next; // Move to the next command in the pipeline
+                continue;
+            }
         }
 
         // If it's not a built-in, execute it via pipeline
