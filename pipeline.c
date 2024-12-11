@@ -9,45 +9,106 @@
 #include "parse.h"
 
 // Function to handle built-in commands
+// Enhanced built-in commands
 int handle_builtin_commands(char *command, char **args)
 {
-    if (args != NULL && command != NULL)
-    {
-        if (strcmp(command, "cd") == 0)
-        {
-            // Handle `cd` (change directory)
-            if (args[1] == NULL)
-            {
-                fprintf(stderr, "cd: missing argument\n");
+    if (command == NULL || args == NULL) return -1;
+
+    // pwd implementation
+    if (strcmp(command, "pwd") == 0) {
+        char cwd[1024];
+        if (getcwd(cwd, sizeof(cwd)) != NULL) {
+            printf("%s\n", cwd);
+            return 0;
+        } else {
+            perror("pwd");
+            return 1;
+        }
+    }
+
+    // author implementation
+    if (strcmp(command, "author") == 0) {
+        printf("Uwase Pauline\n");
+        return 0;
+    }
+    // cd implementation with home directory support
+    if (strcmp(command, "cd") == 0) {
+        if (args[1] == NULL) {
+            // Go to home directory if no argument
+            const char *home = getenv("HOME");
+            if (home == NULL) {
+                fprintf(stderr, "cd: HOME not set\n");
                 return 1;
             }
-            if (chdir(args[1]) != 0)
-            {
+            if (chdir(home) != 0) {
                 perror("cd");
                 return 1;
             }
             return 0;
         }
-        else if (strcmp(command, "exit") == 0)
-        {
-            // Handle `exit` (exit the shell)
-            exit(0);
+        
+        // Change to specified directory
+        if (chdir(args[1]) != 0) {
+            perror("cd");
+            return 1;
         }
-        else if (strcmp(command, "echo") == 0)
-        {
-            // Handle `echo` (print arguments)
-            if (args != NULL)
-            {
-                for (int i = 1; args[i] != NULL; i++)
-                {
-                    printf("%s ", args[i]);
-                }
-                printf("\n");
+        return 0;
+    }
+    // quit and exit implementation
+    if (strcmp(command, "quit") == 0 || strcmp(command, "exit") == 0) {
+        exit(0);
+    }
+
+    return -1; // Not a built-in command
+}
+
+// Redirection handling
+int handle_redirection(char **args)
+{
+    int input_fd = -1, output_fd = -1;
+    
+    // Scan for < and > redirections
+    for (int i = 0; args[i] != NULL; i++) {
+        if (strcmp(args[i], "<") == 0) {
+            if (args[i+1] == NULL) {
+                fprintf(stderr, "Missing input file\n");
+                return -1;
             }
-            return 0;
+            input_fd = open(args[i+1], O_RDONLY);
+            if (input_fd == -1) {
+                perror("input redirection");
+                return -1;
+            }
+            // Remove redirection tokens
+            args[i] = NULL;
+        }
+
+        if (strcmp(args[i], ">") == 0) {
+            if (args[i+1] == NULL) {
+                fprintf(stderr, "Missing output file\n");
+                return -1;
+            }
+            output_fd = open(args[i+1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (output_fd == -1) {
+                perror("output redirection");
+                return -1;
+            }
+            // Remove redirection tokens
+            args[i] = NULL;
         }
     }
-    return -1; // Return -1 if not a built-in command
+    
+    // Perform redirections if needed
+    if (input_fd != -1) {
+        dup2(input_fd, STDIN_FILENO);
+        close(input_fd);
+    }
+    if (output_fd != -1) {
+        dup2(output_fd, STDOUT_FILENO);
+        close(output_fd);
+    }
+    
+    return 0;
 }
 
 // Function to execute the pipeline
