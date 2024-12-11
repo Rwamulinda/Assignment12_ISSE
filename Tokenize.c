@@ -192,7 +192,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             {
                 if (input[i + 1] == '\0')
                 {
-                    snprintf(errmsg, errmsg_sz, "Illegal lone backslash at end of input");
+                    snprintf(errmsg, errmsg_sz, "Illegal escape character ");
                     CL_free(tokens);
                     return NULL;
                 }
