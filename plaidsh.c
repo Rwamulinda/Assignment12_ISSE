@@ -45,8 +45,11 @@ int main() {
             continue;
         }
 
-        // Execute the pipeline (implementation should be in pipeline.c)
-        if (!execute_pipeline(pipeline, errmsg, sizeof(errmsg))) {
+        // Execute the pipeline (void return type)
+        execute_pipeline(pipeline, errmsg, sizeof(errmsg));
+
+        // Check if any error message was set
+        if (errmsg[0] != '\0') {
             fprintf(stderr, "Execution error: %s\n", errmsg);
         }
 
