@@ -3,7 +3,7 @@
 
 #include "Tokenize.h"
 #include "pipeline.h"
-#include "ast.h"
+
 
 // Representation of a single command
 typedef struct Command
