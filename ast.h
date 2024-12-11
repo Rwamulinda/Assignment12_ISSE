@@ -20,7 +20,9 @@ typedef struct Pipeline {
     Command *command;      // A command in the pipeline
     struct Pipeline *next;
     char *input_file;      // Input file for the pipeline (if any)
-    char *output_file; // Next command in the pipeline
+    char *output_file; 
+    char *command;  // Command to execute
+    char **args;  // Next command in the pipeline
 } Pipeline;
 
 // Abstract Syntax Tree (AST) node

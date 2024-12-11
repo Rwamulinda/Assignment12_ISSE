@@ -9,7 +9,7 @@
 #include "parse.h"
 
 // Function to handle built-in commands
-int handle_builtin_commands(char *Command, char **args) {
+int handle_builtin_commands(char *command, char **args) {
     if (strcmp(command, "cd") == 0) {
         // Handle `cd` (change directory)
         if (args[1] == NULL) {
@@ -43,7 +43,7 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
 
     while (current != NULL) {
         // Check if the current command is a built-in command
-        if (handle_builtin_commands(current->Command, current->args) == 0) {
+        if (handle_builtin_commands(current->command, current->args) == 0) {
             // If it's a built-in, just execute it directly
             current = current->next;  // Move to the next command in the pipeline
             continue;
@@ -71,8 +71,8 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
             close(pipe_fds[0]);  // Close read end in child process
 
             // Execute the command
-            if (execvp(current->Command, current->args) == -1) {
-                snprintf(errmsg, errmsg_size, "Error executing command: %s", current->Command);
+            if (execvp(current->command, current->args) == -1) {
+                snprintf(errmsg, errmsg_size, "Error executing command: %s", current->command);
                 perror("execvp");
                 exit(EXIT_FAILURE);
             }
