@@ -36,8 +36,8 @@ int handle_builtin_commands(char *command, char **args) {
 }
 
 // Function to execute the pipeline
-void execute_pipeline(ASTNode *ast) {
-    ASTNode *current = ast;
+void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
+    Pipeline *current = pipeline;  // Start with the first command in the pipeline
     int pipe_fds[2];
     int prev_pipe_fd = -1;
 
@@ -51,8 +51,8 @@ void execute_pipeline(ASTNode *ast) {
 
         // If it's not a built-in, execute it via pipeline
         if (pipe(pipe_fds) == -1) {
-            perror("Error creating pipe");
-            exit(EXIT_FAILURE);
+            snprintf(errmsg, errmsg_size, "Error creating pipe");
+            return;  // Return with error message
         }
 
         pid_t pid = fork();
@@ -72,7 +72,8 @@ void execute_pipeline(ASTNode *ast) {
 
             // Execute the command
             if (execvp(current->command, current->args) == -1) {
-                perror("Error executing command");
+                snprintf(errmsg, errmsg_size, "Error executing command: %s", current->command);
+                perror("execvp");
                 exit(EXIT_FAILURE);
             }
         } else if (pid > 0) {  // Parent process
@@ -82,7 +83,8 @@ void execute_pipeline(ASTNode *ast) {
             // Update the previous pipe read end for the next command
             prev_pipe_fd = pipe_fds[0];
         } else {
-            perror("Fork failed");
+            snprintf(errmsg, errmsg_size, "Fork failed");
+            perror("fork");
             exit(EXIT_FAILURE);
         }
 

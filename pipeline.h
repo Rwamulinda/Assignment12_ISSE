@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 // Function declarations
-void execute_pipeline(ASTNode *ast);
+void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size);
 int handle_builtin_commands(char *command, char **args);
 
 #endif // PIPELINE_H
