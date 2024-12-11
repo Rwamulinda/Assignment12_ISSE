@@ -88,7 +88,17 @@ int is_at_end(const char current)
 
     return 0; // Not at the end of the word yet
 }
-
+void free_token_values(CList tokens)
+{
+    size_t length = CL_length(tokens);
+    for (size_t i = 0; i < length; i++) {
+        Token token = CL_nth(tokens, i);
+        if (token.value != NULL) {
+            free(token.value); // Free token value
+        }
+    }
+    CL_free(tokens); // Free the token list itself
+}
 // Documented in .h file
 CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 {

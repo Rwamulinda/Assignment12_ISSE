@@ -90,4 +90,6 @@ void TOK_consume(CList tokens);
  */
 void TOK_print(CList tokens);
 
+void free_token_values(CList tokens);
+
 #endif /* _TOKENIZE_H_ */
