@@ -3,18 +3,24 @@
 
 // Include necessary headers
 #include <stddef.h>
-#include "clist.h"  // Assuming CList is defined in clist.h
+#include "clist.h"
+#  // Assuming CList is defined in clist.h
 
 // Structure to represent a single command
 typedef struct Command {
     char *command;         // The command itself (e.g., "cat")
-    CList arguments;       // List of arguments (e.g., ["file1.txt"])
+    CList arguments;
+    char **args;            // List of arguments (e.g., ["file1.txt"])
+    int arg_count;          // The count of arguments
+    struct Command *next;         // List of arguments (e.g., ["file1.txt"])
 } Command;
 
 // Structure to represent the entire pipeline
 typedef struct Pipeline {
     Command *command;      // A command in the pipeline
-    struct Pipeline *next; // Next command in the pipeline
+    struct Pipeline *next;
+    char *input_file;      // Input file for the pipeline (if any)
+    char *output_file; // Next command in the pipeline
 } Pipeline;
 
 // Abstract Syntax Tree (AST) node

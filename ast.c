@@ -21,10 +21,10 @@ void add_argument_to_command(Command *cmd, const char *arg) {
 
 // Function to add a command to the pipeline
 void add_command_to_pipeline(Pipeline *pipeline, Command *cmd) {
-    if (pipeline->commands == NULL) {
-        pipeline->commands = cmd;
+    if (pipeline->command == NULL) {
+        pipeline->command = cmd;
     } else {
-        Command *last = pipeline->commands;
+        Command *last = pipeline->command;
         while (last->next != NULL) {
             last = last->next;
         }

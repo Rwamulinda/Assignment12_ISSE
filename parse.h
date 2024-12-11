@@ -3,6 +3,10 @@
 
 #include "Tokenize.h"
 #include "ast.h"  // Include ast.h to use the Command and Pipeline structs
+#include "pipeline.h"
+#include "clist.h"
+
+
 
 // Function to parse a list of tokens into a pipeline
 Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz);
