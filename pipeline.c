@@ -10,72 +10,52 @@
 
 // Function to handle built-in commands
 // Enhanced built-in commands
-int handle_builtin_commands(char *command, char **args)
+int handle_builtin_commands(Command *cmd)
 {
-    if (command == NULL || args == NULL)
+    if (cmd == NULL || cmd->args == NULL || cmd->arg_count == 0) {
         return -1;
+    }
 
-    // pwd implementation
-    if (strcmp(command, "pwd") == 0)
-    {
+    // Safely access the first argument (command name)
+    const char *command = cmd->args[0];
+
+    if (strcmp(command, "pwd") == 0) {
         char cwd[1024];
-        if (getcwd(cwd, sizeof(cwd)) != NULL)
-        {
+        if (getcwd(cwd, sizeof(cwd)) != NULL) {
             printf("%s\n", cwd);
             return 0;
         }
-        else
-        {
-            perror("pwd");
-            return 1;
-        }
+        perror("pwd");
+        return 1;
     }
 
-    // author implementation
-    if (strcmp(command, "author") == 0)
-    {
+    if (strcmp(command, "author") == 0) {
         printf("Uwase Pauline\n");
         return 0;
     }
 
-    // cd implementation with home directory support
-    if (strcmp(command, "cd") == 0)
-    {
-        if (args[1] == NULL)
-        {
-            // Go to home directory if no argument
-            const char *home = getenv("HOME");
-            if (home == NULL)
-            {
-                fprintf(stderr, "cd: HOME not set\n");
-                return 1;
-            }
-            if (chdir(home) != 0)
-            {
-                perror("cd");
-                return 1;
-            }
-            return 0;
+    if (strcmp(command, "cd") == 0) {
+        // Handle cd with optional directory argument
+        const char *target_dir = (cmd->arg_count > 1) ? cmd->args[1] : getenv("HOME");
+        
+        if (target_dir == NULL) {
+            fprintf(stderr, "cd: HOME not set\n");
+            return 1;
         }
 
-        // Change to specified directory
-        if (chdir(args[1]) != 0)
-        {
+        if (chdir(target_dir) != 0) {
             perror("cd");
             return 1;
         }
         return 0;
     }
 
-    // quit and exit implementation
-    if (strcmp(command, "quit") == 0 || strcmp(command, "exit") == 0)
-    {
+    if (strcmp(command, "quit") == 0 || strcmp(command, "exit") == 0) {
         exit(0);
     }
 
     return -1; // Not a built-in command
 }
-
 // Redirection handling
 int handle_redirection(char **args)
 {
@@ -137,71 +117,99 @@ int handle_redirection(char **args)
 // Function to execute the pipeline
 void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size)
 {
-    Pipeline *current = pipeline; // Start with the first command in the pipeline
-    int pipe_fds[2];
+    if (pipeline == NULL) {
+        snprintf(errmsg, errmsg_size, "Empty pipeline");
+        return;
+    }
+
+    Pipeline *current = pipeline;
     int prev_pipe_fd = -1;
 
     while (current != NULL)
     {
-        // Check if the current command is a built-in command
-        if (current->command != NULL)
-        {
-            if (handle_builtin_commands(current->command->command, current->command->args) == 0)
-            {
-                // If it's a built-in, just execute it directly
-                current = current->next; // Move to the next command in the pipeline
-                continue;
-            }
+        Command *cmd = current->command;
+        
+        // Validate command
+        if (cmd == NULL || cmd->args == NULL || cmd->arg_count == 0) {
+            snprintf(errmsg, errmsg_size, "Invalid command in pipeline");
+            return;
         }
 
-        // If it's not a built-in, execute it via pipeline
-        if (pipe(pipe_fds) == -1)
-        {
-            snprintf(errmsg, errmsg_size, "Error creating pipe");
-            return; // Return with error message
+        // Check for built-in commands
+        int builtin_result = handle_builtin_commands(cmd);
+        if (builtin_result == 0) {
+            current = current->next;
+            continue;
+        }
+
+        // Prepare for external command execution
+        int pipe_fds[2];
+        if (current->next != NULL && pipe(pipe_fds) == -1) {
+            snprintf(errmsg, errmsg_size, "Pipe creation failed");
+            return;
         }
 
         pid_t pid = fork();
-        if (pid == 0)
-        { // Child process
-            // If there was a previous pipe, redirect input from it
-            if (prev_pipe_fd != -1)
-            {
+        if (pid == 0) {  // Child process
+            // Handle input redirection
+            if (current->input_file) {
+                int input_fd = open(current->input_file, O_RDONLY);
+                if (input_fd == -1) {
+                    perror("Input redirection failed");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(input_fd, STDIN_FILENO);
+                close(input_fd);
+            }
+
+            // Handle output redirection
+            if (current->output_file) {
+                int output_fd = open(current->output_file, 
+                                     O_WRONLY | O_CREAT | O_TRUNC, 
+                                     0644);
+                if (output_fd == -1) {
+                    perror("Output redirection failed");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(output_fd, STDOUT_FILENO);
+                close(output_fd);
+            }
+
+            // Handle piping
+            if (prev_pipe_fd != -1) {
                 dup2(prev_pipe_fd, STDIN_FILENO);
                 close(prev_pipe_fd);
             }
 
-            // If this is not the last command, redirect output to the pipe
-            if (current->next != NULL)
-            {
+            if (current->next != NULL) {
                 dup2(pipe_fds[1], STDOUT_FILENO);
+                close(pipe_fds[0]);
+                close(pipe_fds[1]);
             }
 
-            close(pipe_fds[0]); // Close read end in child process
-
-            // Execute the command
-            if (execvp(current->command->command, current->command->args) == -1)
-            {
-                snprintf(errmsg, errmsg_size, "Error executing command: %s", current->command->command);
-                perror("execvp");
-                exit(EXIT_FAILURE);
-            }
-        }
-        else if (pid > 0)
-        {                       // Parent process
-            wait(NULL);         // Wait for the child to finish
-            close(pipe_fds[1]); // Close write end in parent process
-
-            // Update the previous pipe read end for the next command
-            prev_pipe_fd = pipe_fds[0];
-        }
-        else
-        {
-            snprintf(errmsg, errmsg_size, "Fork failed");
-            perror("fork");
+            // Execute command
+            execvp(cmd->args[0], cmd->args);
+            
+            // If execvp fails
+            perror("Command execution failed");
             exit(EXIT_FAILURE);
         }
+        else if (pid > 0) {  // Parent process
+            // Wait for child
+            int status;
+            waitpid(pid, &status, 0);
 
-        current = current->next; // Move to the next command in the pipeline
+            // Cleanup pipe resources
+            if (current->next != NULL) {
+                close(pipe_fds[1]);
+                prev_pipe_fd = pipe_fds[0];
+            }
+        }
+        else {
+            snprintf(errmsg, errmsg_size, "Fork failed");
+            return;
+        }
+
+        current = current->next;
     }
 }
