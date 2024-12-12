@@ -8,51 +8,106 @@
 #include "clist.h"
 #include "tokenize.h"
 
-void test_TOK_tokenize_input() {
-    char errmsg[256];
+// Helper function to print token details for debugging
+void print_token(const Token* token, int index) {
+    if (token) {
+        printf("Token %d: type %d, value '%s'\n", 
+               index, token->type, token->value);
+    } else {
+        printf("Token %d: NULL\n", index);
+    }
+}
 
-    // Test Case 1: Valid input with simple tokens
-    const char *input1 = "echo hello world";
-    CList tokens1 = TOK_tokenize_input(input1, errmsg, sizeof(errmsg));
-    assert(tokens1 != NULL);
-    assert(CL_length(tokens1) == 3); // Expect 3 tokens: "echo", "hello", "world"
+// Validate a specific token in the list
+void validate_token(CList tokens, int index, int expected_type, const char* expected_value) {
+    Token token = CL_nth(tokens, index);
+    
+    // Detailed assertion with informative error message
+    if (token.type != expected_type || strcmp(token.value, expected_value) != 0) {
+        printf("Token validation failed at index %d\n", index);
+        printf("Expected: type %d, value '%s'\n", expected_type, expected_value);
+        printf("Actual:   type %d, value '%s'\n", token.type, token.value);
+        print_token(&token, index);
+        
+        // Fail the test with a clear message
+        assert(0);
+    }
+}
 
-    Token token = CL_nth(tokens1, 0);
-    assert(token.type == TOK_WORD);
-    assert(strcmp(token.value, "echo") == 0);
+// Test basic word tokenization
+void test_basic_word_tokenization() {
+    printf("Running basic word tokenization test...\n");
+    
+    char errmsg[256] = {0};
+    const char *input = "echo hello world";
+    
+    CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+    assert(tokens != NULL);
+    
+    int token_count = CL_length(tokens);
+    printf("Token count: %d\n", token_count);
+    assert(token_count == 3);
+    
+    // Validate each token
+    validate_token(tokens, 0, TOK_WORD, "echo");
+    validate_token(tokens, 1, TOK_WORD, "hello");
+    validate_token(tokens, 2, TOK_WORD, "world");
+    
+    CL_free(tokens);
+    printf("Basic word tokenization test passed.\n");
+}
 
-    token = CL_nth(tokens1, 1);
-    assert(token.type == TOK_WORD);
-    assert(strcmp(token.value, "hello") == 0);
+// Test tokenization with special characters and operators
+void test_advanced_tokenization() {
+    printf("Running advanced tokenization test...\n");
+    
+    char errmsg[256] = {0};
+    const char *input = "cat < input.txt | grep 'pattern' > output.txt";
+    
+    CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+    assert(tokens != NULL);
+    
+    int token_count = CL_length(tokens);
+    printf("Token count: %d\n", token_count);
+    assert(token_count == 7);
+    
+    // Validate tokens with special characters
+    validate_token(tokens, 0, TOK_WORD, "cat");
+    validate_token(tokens, 1, TOK_LESSTHAN, "<");
+    validate_token(tokens, 2, TOK_WORD, "input.txt");
+    validate_token(tokens, 3, TOK_PIPE, "|");
+    validate_token(tokens, 4, TOK_WORD, "grep");
+    validate_token(tokens, 5, TOK_WORD, "'pattern'");
+    validate_token(tokens, 6, TOK_GREATERTHAN, ">");
+    
+    CL_free(tokens);
+    printf("Advanced tokenization test passed.\n");
+}
 
-    token = CL_nth(tokens1, 2);
-    assert(token.type == TOK_WORD);
-    assert(strcmp(token.value, "world") == 0);
-
-    CL_free(tokens1);
-
-    // Test Case 2: Input with special characters
-    const char *input2 = "cat < input.txt | grep 'pattern' > output.txt";
-    CList tokens2 = TOK_tokenize_input(input2, errmsg, sizeof(errmsg));
-    assert(tokens2 != NULL);
-    assert(CL_length(tokens2) == 7); // Expect tokens for "cat", "<", "input.txt", "|", "grep", "'pattern'", ">"
-
-    token = CL_nth(tokens2, 1);
-    assert(token.type == TOK_LESSTHAN);
-    assert(strcmp(token.value, "<") == 0);
-
-    CL_free(tokens2);
-
-    // Test Case 3: Invalid input
-    const char *input3 = "echo \"unterminated string";
-    CList tokens3 = TOK_tokenize_input(input3, errmsg, sizeof(errmsg));
-    assert(tokens3 == NULL);
-    assert(strlen(errmsg) > 0); // Expect an error message
-
-    printf("All tokenizer tests passed.\n");
+// Test error handling for invalid input
+void test_error_tokenization() {
+    printf("Running error tokenization test...\n");
+    
+    char errmsg[256] = {0};
+    const char *input = "echo \"unterminated string";
+    
+    CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+    
+    // Expect NULL return and non-empty error message
+    assert(tokens == NULL);
+    assert(strlen(errmsg) > 0);
+    
+    printf("Error message: %s\n", errmsg);
+    printf("Error tokenization test passed.\n");
 }
 
 int main() {
-    test_TOK_tokenize_input();
+    printf("Starting Tokenizer Test Suite...\n");
+    
+    test_basic_word_tokenization();
+    test_advanced_tokenization();
+    test_error_tokenization();
+    
+    printf("All Tokenizer Tests Passed Successfully!\n");
     return 0;
 }
