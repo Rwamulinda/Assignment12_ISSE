@@ -6,8 +6,10 @@
 // Function to create a new command
 Command *create_command() {
     Command *cmd = malloc(sizeof(Command));
-    cmd->args = malloc(sizeof(char *));  // Allocate space for one argument initially
-    cmd->arg_count = 0;
+    cmd->args = malloc(2 * sizeof(char *));  // Allocate space for one argument initially
+    cmd->arg_count = 1;
+    cmd->args[0] = cmd->command;
+    cmd->args[1] = NULL;
     cmd->next = NULL;
     return cmd;
 }
@@ -16,7 +18,7 @@ Command *create_command() {
 void add_argument_to_command(Command *cmd, const char *arg) {
     cmd->args = realloc(cmd->args, sizeof(char *) * (cmd->arg_count + 1));
     cmd->args[cmd->arg_count] = strdup(arg);  // Allocate and copy the argument string
-    cmd->arg_count++;
+    cmd->args[cmd->arg_count++] = NULL;
 }
 
 // Function to add a command to the pipeline
