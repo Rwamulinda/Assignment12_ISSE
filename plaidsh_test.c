@@ -51,3 +51,8 @@ void test_TOK_tokenize_input() {
 
     printf("All tokenizer tests passed.\n");
 }
+
+int main() {
+    test_TOK_tokenize_input();
+    return 0;
+}
