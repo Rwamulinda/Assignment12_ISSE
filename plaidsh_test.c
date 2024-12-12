@@ -35,7 +35,7 @@ void validate_token(CList tokens, int index, int expected_type, const char* expe
 }
 
 // Test basic word tokenization
-void test_basic_word_tokenization() {
+int test_basic_word_tokenization() {
     printf("Running basic word tokenization test...\n");
     
     char errmsg[256] = {0};
@@ -68,10 +68,11 @@ void test_basic_word_tokenization() {
     
     CL_free(tokens);
     printf("Basic word tokenization test passed.\n");
+    return 1; // Return 1 to indicate the test passed
 }
 
 // Similarly update other test functions to account for the end token
-void test_advanced_tokenization() {
+int test_advanced_tokenization() {
     printf("Running advanced tokenization test...\n");
     
     char errmsg[256] = {0};
@@ -101,9 +102,11 @@ void test_advanced_tokenization() {
     
     CL_free(tokens);
     printf("Advanced tokenization test passed.\n");
+    return 1; // Return 1 to indicate the test passed
 }
+
 // Test error handling for invalid input
-void test_error_tokenization() {
+int test_error_tokenization() {
     printf("Running error tokenization test...\n");
     
     char errmsg[256] = {0};
@@ -117,22 +120,24 @@ void test_error_tokenization() {
     
     printf("Error message: %s\n", errmsg);
     printf("Error tokenization test passed.\n");
+    return 1; // Return 1 to indicate the test passed
 }
 
 int main() {
-
   int passed = 0;
   int num_tests = 0;
   printf("Starting Tokenizer Test Suite...\n");
     
-  num_tests++; passed += test_basic_word_tokenization();
-  num_tests++; passed += test_advanced_tokenization();
-  num_tests++; passed += test_error_tokenization();
+  num_tests++; 
+  passed += test_basic_word_tokenization();
+  
+  num_tests++; 
+  passed += test_advanced_tokenization();
+  
+  num_tests++; 
+  passed += test_error_tokenization();
     
   printf("Passed %d/%d test cases\n", passed, num_tests);
   fflush(stdout);
   return 0;
 }
-
-
-  
