@@ -46,18 +46,31 @@ void test_basic_word_tokenization() {
     
     int token_count = CL_length(tokens);
     printf("Token count: %d\n", token_count);
-    assert(token_count == 3);
     
-    // Validate each token
+    // Debug: Print all tokens
+    for (int i = 0; i < token_count; i++) {
+        Token token = CL_nth(tokens, i);
+        printf("Token %d: type=%d, value='%s', length=%zu\n", 
+               i, token.type, token.value, strlen(token.value));
+    }
+    
+    // Adjust assertion to expect 4 tokens (3 words + 1 end token)
+    assert(token_count == 4);
+    
+    // Validate the actual words, ignoring the end token
     validate_token(tokens, 0, TOK_WORD, "echo");
     validate_token(tokens, 1, TOK_WORD, "hello");
     validate_token(tokens, 2, TOK_WORD, "world");
+    
+    // Verify the last token is the end token
+    Token last_token = CL_nth(tokens, token_count - 1);
+    assert(last_token.type == TOK_END);
     
     CL_free(tokens);
     printf("Basic word tokenization test passed.\n");
 }
 
-// Test tokenization with special characters and operators
+// Similarly update other test functions to account for the end token
 void test_advanced_tokenization() {
     printf("Running advanced tokenization test...\n");
     
@@ -69,7 +82,9 @@ void test_advanced_tokenization() {
     
     int token_count = CL_length(tokens);
     printf("Token count: %d\n", token_count);
-    assert(token_count == 7);
+    
+    // Adjust to expect 8 tokens (7 meaningful tokens + 1 end token)
+    assert(token_count == 8);
     
     // Validate tokens with special characters
     validate_token(tokens, 0, TOK_WORD, "cat");
@@ -77,13 +92,16 @@ void test_advanced_tokenization() {
     validate_token(tokens, 2, TOK_WORD, "input.txt");
     validate_token(tokens, 3, TOK_PIPE, "|");
     validate_token(tokens, 4, TOK_WORD, "grep");
-    validate_token(tokens, 5, TOK_WORD, "'pattern'");
+    validate_token(tokens, 5, TOK_QUOTED_WORD, "'pattern'");
     validate_token(tokens, 6, TOK_GREATERTHAN, ">");
+    
+    // Verify the last token is the end token
+    Token last_token = CL_nth(tokens, token_count - 1);
+    assert(last_token.type == TOK_END);
     
     CL_free(tokens);
     printf("Advanced tokenization test passed.\n");
 }
-
 // Test error handling for invalid input
 void test_error_tokenization() {
     printf("Running error tokenization test...\n");
