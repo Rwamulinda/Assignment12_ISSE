@@ -117,100 +117,74 @@ int handle_redirection(char **args)
 // Function to execute the pipeline
 void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size)
 {
-    if (pipeline == NULL) {
-        snprintf(errmsg, errmsg_size, "Empty pipeline");
-        return;
-    }
-
-    Pipeline *current = pipeline;
+    Pipeline *current = pipeline; // Start with the first command in the pipeline
+    int pipe_fds[2];
     int prev_pipe_fd = -1;
 
     while (current != NULL)
     {
-        Command *cmd = current->command;
-        
-        // Validate command
-        if (cmd == NULL || cmd->args == NULL || cmd->arg_count == 0) {
-            snprintf(errmsg, errmsg_size, "Invalid command in pipeline");
-            return;
+        // Check if the current command is a built-in command
+        if (current->command != NULL)
+        {
+            if (handle_builtin_commands(current->command) == 0)
+            {
+                // If it's a built-in, just execute it directly and skip the rest of the pipeline
+                current = current->next; // Move to the next command in the pipeline
+                continue;
+            }
         }
 
-        // Check for built-in commands
-        int builtin_result = handle_builtin_commands(cmd);
-        if (builtin_result == 0) {
-            current = current->next;
-            continue;
-        }
-
-        // Prepare for external command execution
-        int pipe_fds[2];
-        if (current->next != NULL && pipe(pipe_fds) == -1) {
-            snprintf(errmsg, errmsg_size, "Pipe creation failed");
-            return;
+        // If it's not a built-in, execute it via pipeline
+        if (pipe(pipe_fds) == -1)
+        {
+            snprintf(errmsg, errmsg_size, "Error creating pipe");
+            return; // Return with error message
         }
 
         pid_t pid = fork();
-        if (pid == 0) {  // Child process
-            // Handle input redirection
-            if (current->input_file) {
-                int input_fd = open(current->input_file, O_RDONLY);
-                if (input_fd == -1) {
-                    perror("Input redirection failed");
-                    exit(EXIT_FAILURE);
-                }
-                dup2(input_fd, STDIN_FILENO);
-                close(input_fd);
-            }
-
-            // Handle output redirection
-            if (current->output_file) {
-                int output_fd = open(current->output_file, 
-                                     O_WRONLY | O_CREAT | O_TRUNC, 
-                                     0644);
-                if (output_fd == -1) {
-                    perror("Output redirection failed");
-                    exit(EXIT_FAILURE);
-                }
-                dup2(output_fd, STDOUT_FILENO);
-                close(output_fd);
-            }
-
-            // Handle piping: connect input of the current command to the previous command's output
-            if (prev_pipe_fd != -1) {
+        if (pid == 0)
+        { // Child process
+            // If there was a previous pipe, redirect input from it
+            if (prev_pipe_fd != -1)
+            {
                 dup2(prev_pipe_fd, STDIN_FILENO);
                 close(prev_pipe_fd);
             }
 
-            // If there is a next command, set up the pipe for output
-            if (current->next != NULL) {
-                dup2(pipe_fds[1], STDOUT_FILENO);  // Connect the output of the current command to the pipe
-                close(pipe_fds[0]);  // Close read end of the pipe in the child
-                close(pipe_fds[1]);  // Close write end after dup2
+            // If this is not the last command, redirect output to the pipe
+            if (current->next != NULL)
+            {
+                dup2(pipe_fds[1], STDOUT_FILENO);
             }
+
+            close(pipe_fds[0]); // Close read end in child process
+
+            // Handle redirection
+            handle_redirection(current->command->args);
 
             // Execute the command
-            execvp(cmd->args[0], cmd->args);
-            
-            // If execvp fails
-            perror("Command execution failed");
-            exit(EXIT_FAILURE);
-        }
-        else if (pid > 0) {  // Parent process
-            // Wait for child
-            int status;
-            waitpid(pid, &status, 0);
-
-            // Cleanup pipe resources
-            if (current->next != NULL) {
-                close(pipe_fds[1]);  // Close the write end of the pipe after use
-                prev_pipe_fd = pipe_fds[0];  // Store the read end for the next command
+            if (execvp(current->command->command, current->command->args) == -1)
+            {
+                snprintf(errmsg, errmsg_size, "Error executing command: %s", current->command->command);
+                perror("execvp");
+                exit(EXIT_FAILURE);
             }
         }
-        else {
+        else if (pid > 0)
+        {                       // Parent process
+            wait(NULL);         // Wait for the child to finish
+            close(pipe_fds[1]); // Close write end in parent process
+
+            // Update the previous pipe read end for the next command
+            prev_pipe_fd = pipe_fds[0];
+        }
+        else
+        {
             snprintf(errmsg, errmsg_size, "Fork failed");
-            return;
+            perror("fork");
+            exit(EXIT_FAILURE);
         }
 
-        current = current->next;
+        current = current->next; // Move to the next command in the pipeline
     }
 }
