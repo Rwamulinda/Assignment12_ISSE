@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <glob.h>
 #include "parse.h"
 #include "Tokenize.h"
 #include "pipeline.h"
 #include "ast.h"
+#include "clist.h"
 
 Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
 {
@@ -20,17 +22,54 @@ Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
         // If token is a word or quoted word, it's part of a command
         if (token.type == TOK_WORD || token.type == TOK_QUOTED_WORD)
         {
-            // Start a new command if this is the first token
-            if (current_command == NULL)
+            // Check if the token is a wildcard (e.g., *.c)
+            if (strchr(token.value, '*') && strchr(token.value, '.'))
             {
-                current_command = (Command *)malloc(sizeof(Command));
-                current_command->command = strdup(token.value);
-                current_command->arguments = CL_new();
+                glob_t globbuf;
+                int glob_result = glob(token.value, GLOB_TILDE_CHECK, NULL, &globbuf);
+                
+                if (glob_result == 0) // Glob was successful
+                {
+                    for (size_t i = 0; i < globbuf.gl_pathc; i++)
+                    {
+                        Token glob_token = {
+                            .type = TOK_WORD,
+                            .value = strdup(globbuf.gl_pathv[i])
+                        };
+                        
+                        // Add glob result as an argument
+                        CL_append(current_command->arguments, glob_token);
+                    }
+                    globfree(&globbuf);
+                }
+                else
+                {
+                    // No match found, add original token
+                    if (current_command == NULL)
+                    {
+                        current_command = (Command *)malloc(sizeof(Command));
+                        current_command->command = strdup(token.value);
+                        current_command->arguments = CL_new();
+                    }
+                    else
+                    {
+                        CL_append(current_command->arguments, token);
+                    }
+                }
             }
             else
             {
-                // Add token to arguments of the current command
-                CL_append(current_command->arguments, token);
+                // Normal word token
+                if (current_command == NULL)
+                {
+                    current_command = (Command *)malloc(sizeof(Command));
+                    current_command->command = strdup(token.value);
+                    current_command->arguments = CL_new();
+                }
+                else
+                {
+                    CL_append(current_command->arguments, token);
+                }
             }
         }
         // If token is a pipe, connect the command and start a new command
@@ -38,7 +77,6 @@ Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
         {
             if (current_command != NULL)
             {
-                // Add the current command to the pipeline
                 Pipeline *new_pipeline = (Pipeline *)malloc(sizeof(Pipeline));
                 new_pipeline->command = current_command;
                 new_pipeline->next = NULL;
@@ -53,13 +91,12 @@ Pipeline *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
                 }
                 current_pipeline = new_pipeline;
             }
-            current_command = NULL; // Reset current command for the next part of the pipeline
+            current_command = NULL;
         }
         // Handle redirection (if needed)
         else if (token.type == TOK_LESSTHAN || token.type == TOK_GREATERTHAN)
         {
             // Handle input/output redirection logic here
-            // For example, associate redirection token with the current command
         }
     }
 
