@@ -8,25 +8,6 @@
 #include "clist.h"
 #include "tokenize.h"
 
-// Test case tracking and reporting
-int total_tests = 0;
-int passed_tests = 0;
-int failed_tests = 0;
-
-// Macro to simplify test reporting
-#define RUN_TEST(test_func) do { \
-    total_tests++; \
-    printf("\n[TEST %d] Running %s...\n", total_tests, #test_func); \
-    int result = test_func(); \
-    if (result == 0) { \
-        passed_tests++; \
-        printf("[PASS] %s\n", #test_func); \
-    } else { \
-        failed_tests++; \
-        printf("[FAIL] %s\n", #test_func); \
-    } \
-} while(0)
-
 // Helper function to print token details for debugging
 void print_token(const Token* token, int index) {
     if (token) {
@@ -37,37 +18,31 @@ void print_token(const Token* token, int index) {
     }
 }
 
-// Safe token validation with more robust error handling
-int validate_token(CList tokens, int index, int expected_type, const char* expected_value) {
-    if (index < 0 || index >= CL_length(tokens)) {
-        printf("ERROR: Token index %d out of bounds\n", index);
-        return -1;
-    }
-    
+// Validate a specific token in the list
+void validate_token(CList tokens, int index, int expected_type, const char* expected_value) {
     Token token = CL_nth(tokens, index);
     
+    // Detailed assertion with informative error message
     if (token.type != expected_type || strcmp(token.value, expected_value) != 0) {
         printf("Token validation failed at index %d\n", index);
         printf("Expected: type %d, value '%s'\n", expected_type, expected_value);
         printf("Actual:   type %d, value '%s'\n", token.type, token.value);
         print_token(&token, index);
         
-        return -1;
+        // Fail the test with a clear message
+        assert(0);
     }
-    
-    return 0;
 }
 
 // Test basic word tokenization
-int test_basic_word_tokenization() {
+void test_basic_word_tokenization() {
+    printf("Running basic word tokenization test...\n");
+    
     char errmsg[256] = {0};
     const char *input = "echo hello world";
     
     CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-    if (tokens == NULL) {
-        printf("Tokenization failed: %s\n", errmsg);
-        return -1;
-    }
+    assert(tokens != NULL);
     
     int token_count = CL_length(tokens);
     printf("Token count: %d\n", token_count);
@@ -79,104 +54,85 @@ int test_basic_word_tokenization() {
                i, token.type, token.value, strlen(token.value));
     }
     
-    // Validate tokens
-    if (token_count != 4) {
-        printf("Expected 4 tokens, got %d\n", token_count);
-        CL_free(tokens);
-        return -1;
-    }
+    // Adjust assertion to expect 4 tokens (3 words + 1 end token)
+    assert(token_count == 4);
     
-    if (validate_token(tokens, 0, TOK_WORD, "echo") != 0) return -1;
-    if (validate_token(tokens, 1, TOK_WORD, "hello") != 0) return -1;
-    if (validate_token(tokens, 2, TOK_WORD, "world") != 0) return -1;
+    // Validate the actual words, ignoring the end token
+    validate_token(tokens, 0, TOK_WORD, "echo");
+    validate_token(tokens, 1, TOK_WORD, "hello");
+    validate_token(tokens, 2, TOK_WORD, "world");
     
-    // Check end token
+    // Verify the last token is the end token
     Token last_token = CL_nth(tokens, token_count - 1);
-    if (last_token.type != TOK_END) {
-        printf("Last token is not END token\n");
-        CL_free(tokens);
-        return -1;
-    }
+    assert(last_token.type == TOK_END);
     
     CL_free(tokens);
-    return 0;
+    printf("Basic word tokenization test passed.\n");
 }
 
-// Advanced tokenization test
-int test_advanced_tokenization() {
+// Similarly update other test functions to account for the end token
+void test_advanced_tokenization() {
+    printf("Running advanced tokenization test...\n");
+    
     char errmsg[256] = {0};
     const char *input = "cat < input.txt | grep 'pattern' > output.txt";
     
     CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-    if (tokens == NULL) {
-        printf("Tokenization failed: %s\n", errmsg);
-        return -1;
-    }
+    assert(tokens != NULL);
     
     int token_count = CL_length(tokens);
     printf("Token count: %d\n", token_count);
     
-    if (token_count != 8) {
-        printf("Expected 8 tokens, got %d\n", token_count);
-        CL_free(tokens);
-        return -1;
-    }
+    // Adjust to expect 8 tokens (7 meaningful tokens + 1 end token)
+    assert(token_count == 8);
     
-    // Validate specific tokens
-    if (validate_token(tokens, 0, TOK_WORD, "cat") != 0) return -1;
-    if (validate_token(tokens, 1, TOK_LESSTHAN, "<") != 0) return -1;
-    if (validate_token(tokens, 2, TOK_WORD, "input.txt") != 0) return -1;
-    if (validate_token(tokens, 3, TOK_PIPE, "|") != 0) return -1;
-    if (validate_token(tokens, 4, TOK_WORD, "grep") != 0) return -1;
-    if (validate_token(tokens, 5, TOK_QUOTED_WORD, "'pattern'") != 0) return -1;
-    if (validate_token(tokens, 6, TOK_GREATERTHAN, ">") != 0) return -1;
+    // Validate tokens with special characters
+    validate_token(tokens, 0, TOK_WORD, "cat");
+    validate_token(tokens, 1, TOK_LESSTHAN, "<");
+    validate_token(tokens, 2, TOK_WORD, "input.txt");
+    validate_token(tokens, 3, TOK_PIPE, "|");
+    validate_token(tokens, 4, TOK_WORD, "grep");
+    validate_token(tokens, 5, TOK_QUOTED_WORD, "'pattern'");
+    validate_token(tokens, 6, TOK_GREATERTHAN, ">");
     
-    // Check end token
+    // Verify the last token is the end token
     Token last_token = CL_nth(tokens, token_count - 1);
-    if (last_token.type != TOK_END) {
-        printf("Last token is not END token\n");
-        CL_free(tokens);
-        return -1;
-    }
+    assert(last_token.type == TOK_END);
     
     CL_free(tokens);
-    return 0;
+    printf("Advanced tokenization test passed.\n");
 }
-
 // Test error handling for invalid input
-int test_error_tokenization() {
+void test_error_tokenization() {
+    printf("Running error tokenization test...\n");
+    
     char errmsg[256] = {0};
     const char *input = "echo \"unterminated string";
     
     CList tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
     
     // Expect NULL return and non-empty error message
-    if (tokens != NULL) {
-        printf("Expected NULL tokens for invalid input\n");
-        CL_free(tokens);
-        return -1;
-    }
-    
-    if (strlen(errmsg) == 0) {
-        printf("Expected non-empty error message\n");
-        return -1;
-    }
+    assert(tokens == NULL);
+    assert(strlen(errmsg) > 0);
     
     printf("Error message: %s\n", errmsg);
-    return 0;
+    printf("Error tokenization test passed.\n");
 }
 
 int main() {
-    printf("Starting Tokenizer Test Suite...\n");
+
+  int passed = 0;
+  int num_tests = 0;
+  printf("Starting Tokenizer Test Suite...\n");
     
-    RUN_TEST(test_basic_word_tokenization);
-    RUN_TEST(test_advanced_tokenization);
-    RUN_TEST(test_error_tokenization);
+  num_tests++; passed += test_basic_word_tokenization();
+  num_tests++; passed += test_advanced_tokenization();
+  num_tests++; passed += test_error_tokenization();
     
-    printf("\nTest Summary:\n");
-    printf("Total Tests:  %d\n", total_tests);
-    printf("Passed Tests: %d\n", passed_tests);
-    printf("Failed Tests: %d\n", failed_tests);
-    
-    return failed_tests > 0 ? -1 : 0;
+  printf("Passed %d/%d test cases\n", passed, num_tests);
+  fflush(stdout);
+  return 0;
 }
+
+
+  
