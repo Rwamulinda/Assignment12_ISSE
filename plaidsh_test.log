@@ -1,0 +1,57 @@
+Welcome to Plaid Shell!
+[?2004h#? 
+[?2004lParsing error: 
+[?2004h#?     
+[?2004lParsing error: 
+[?2004h#?   \  
+[?2004lCommand execution failed: No such file or directory
+
+=================================================================
+[1m[31m==3384==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 2 byte(s) in 1 object(s) allocated from:
+[1m[0m    #0 0x7f14c189e4e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
+    #1 0x55b84b4a8d1d in TOK_tokenize_input /mnt/c/Users/robot/Desktop/Assignment12_ISSE/Tokenize.c:251
+    #2 0x55b84b4ab4fa in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:32
+    #3 0x7f14c14811c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 6d64b17fbac799e68da7ebd9985ddf9b5cb375e6)
+    #4 0x7f14c148128a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 6d64b17fbac799e68da7ebd9985ddf9b5cb375e6)
+    #5 0x55b84b4a66c4 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x36c4) (BuildId: 4dc98932e634bcda14b960597f57560e6ad55459)
+
+SUMMARY: AddressSanitizer: 2 byte(s) leaked in 1 allocation(s).
+[?2004h#? pwd
+[?2004l/mnt/c/Users/robot/Desktop/Assignment12_ISSE
+[?2004h#? ls --color
+[?2004l [0m[01;32mMakefile[0m                  [01;32mast.c[0m     [01;32mparse.h[0m      [01;32mplaidsh.o[0m
+[34;42m'Plaid Shell Playground'[0m   [01;32mast.h[0m     [01;32mparse.o[0m      [01;32mplaidsh_test[0m
+ [01;32mREADME.md[0m                 [01;32mast.o[0m     [01;32mpipeline.c[0m   [01;32mplaidsh_test.c[0m
+ [01;32mToken.h[0m                   [01;32mclist.c[0m   [01;32mpipeline.h[0m   [01;32mplaidsh_test.log[0m
+ [01;32mTokenize.c[0m                [01;32mclist.h[0m   [01;32mpipeline.o[0m   [01;32mplaidsh_test.o[0m
+ [01;32mTokenize.h[0m                [01;32mclist.o[0m   [01;32mplaidsh[0m      [01;32mplaidsh_test.py[0m
+ [01;32mTokenize.o[0m                [01;32mparse.c[0m   [01;32mplaidsh.c[0m    [01;32msetup_playground.sh[0m
+[?2004h#? /mnt/c/Users/robot/Desktop/Assignment12_ISSE/setup_playground.sh
+[?2004lPlaid Shell playground created
+[?2004h#? cd Plaid\ Shell\ Playground
+[?2004l[?2004h#? pwd
+[?2004l/mnt/c/Users/robot/Desktop/Assignment12_ISSE/Plaid Shell Playground
+[?2004h#? ls
+[?2004l README  'best sitcoms.txt'  'seven dwarfs.txt'   shells.txt
+[?2004h#? ls *.txt
+[?2004l'best sitcoms.txt'  'seven dwarfs.txt'	 shells.txt
+[?2004h#? echo $PATH
+[?2004l$PATH
+[?2004h#? author
+[?2004lUwase Pauline
+[?2004h#? author | sed -e "s/^/Written by /"
+[?2004lUwase Pauline
+grep Happy *.txt
+Written by grep Happy *.txt
+cat "best sitcoms.txt" | grep Seinfeld
+Written by cat "best sitcoms.txt" | grep Seinfeld
+cat "best sitcoms.txt"|grep Seinfeld|wc -l
+Written by cat "best sitcoms.txt"|grep Seinfeld|wc -l
+sed -ne "s/The Simpsons/I Love Lucy/p" < best\ sitcoms.txt > output
+Written by sed -ne "s/The Simpsons/I Love Lucy/p" < best\ sitcoms.txt > output
+ls -l
+Written by ls -l
+cat output
+Written by cat output

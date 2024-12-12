@@ -175,19 +175,20 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size)
                 close(output_fd);
             }
 
-            // Handle piping
+            // Handle piping: connect input of the current command to the previous command's output
             if (prev_pipe_fd != -1) {
                 dup2(prev_pipe_fd, STDIN_FILENO);
                 close(prev_pipe_fd);
             }
 
+            // If there is a next command, set up the pipe for output
             if (current->next != NULL) {
-                dup2(pipe_fds[1], STDOUT_FILENO);
-                close(pipe_fds[0]);
-                close(pipe_fds[1]);
+                dup2(pipe_fds[1], STDOUT_FILENO);  // Connect the output of the current command to the pipe
+                close(pipe_fds[0]);  // Close read end of the pipe in the child
+                close(pipe_fds[1]);  // Close write end after dup2
             }
 
-            // Execute command
+            // Execute the command
             execvp(cmd->args[0], cmd->args);
             
             // If execvp fails
@@ -201,8 +202,8 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size)
 
             // Cleanup pipe resources
             if (current->next != NULL) {
-                close(pipe_fds[1]);
-                prev_pipe_fd = pipe_fds[0];
+                close(pipe_fds[1]);  // Close the write end of the pipe after use
+                prev_pipe_fd = pipe_fds[0];  // Store the read end for the next command
             }
         }
         else {
