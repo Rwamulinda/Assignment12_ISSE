@@ -71,6 +71,7 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
     Pipeline *current = pipeline; 
     int pipe_fds[2];
     int prev_pipe_fd = -1;
+    int status;  // To capture child process exit status
 
     // Handle empty pipeline
     if (current == NULL) {
@@ -85,6 +86,9 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
             snprintf(errmsg, errmsg_size, "Invalid or empty command");
             return;
         }
+
+        // Debug print: Show command being processed
+        fprintf(stderr, "Processing command: %s\n", current->command->args[0]);
 
         // Check for built-in commands first
         int builtin_result = handle_builtin_commands(current->command);
@@ -131,29 +135,52 @@ void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
             }
 
             // If there was a previous pipe, redirect input from it
-            if (prev_pipe_fd != -1)
+            if (prev_pipe_fd != -1) {
                 dup2(prev_pipe_fd, STDIN_FILENO);
+                close(prev_pipe_fd);
+            }
            
             // If this is not the last command, redirect output to the pipe
-            if (current->next != NULL)
+            if (current->next != NULL) {
                 dup2(pipe_fds[1], STDOUT_FILENO);
+                close(pipe_fds[0]);
+                close(pipe_fds[1]);
+            }
 
-            close(pipe_fds[0]); 
+            // Ensure stdout is flushed
+            fflush(stdout);
 
             // Execute command
             execvp(current->command->args[0], current->command->args); 
             
             // If execvp fails
-            perror("Command not found");
+            perror("Command execution failed");
             exit(EXIT_FAILURE); 
             
         } else if (pid > 0) { 
             // Parent process
-            wait(NULL); 
+            // Wait for child and check status
+            waitpid(pid, &status, 0);
 
-            close(pipe_fds[1]); 
+            // Check if child process exited normally
+            if (WIFEXITED(status)) {
+                if (WEXITSTATUS(status) != 0) {
+                    fprintf(stderr, "Command exited with status %d\n", WEXITSTATUS(status));
+                }
+            } else {
+                fprintf(stderr, "Command terminated abnormally\n");
+            }
 
-            prev_pipe_fd = pipe_fds[0]; 
+            // Close write end of pipe
+            if (current->next != NULL) {
+                close(pipe_fds[1]);
+            }
+
+            // Save read end of pipe for next iteration
+            if (prev_pipe_fd != -1) {
+                close(prev_pipe_fd);
+            }
+            prev_pipe_fd = (current->next != NULL) ? pipe_fds[0] : -1;
 
             current = current->next; 
             

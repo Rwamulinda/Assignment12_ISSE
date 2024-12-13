@@ -88,17 +88,7 @@ int is_at_end(const char current)
 
     return 0; // Not at the end of the word yet
 }
-void free_token_values(CList tokens)
-{
-    size_t length = CL_length(tokens);
-    for (size_t i = 0; i < length; i++) {
-        Token token = CL_nth(tokens, i);
-        if (token.value != NULL) {
-            free(token.value); // Free token value
-        }
-    }
-    CL_free(tokens); // Free the token list itself
-}
+
 // Documented in .h file
 CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 {
@@ -109,7 +99,6 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
         snprintf(errmsg, errmsg_sz, "Null input provided");
         return NULL;
     }
-
 
     while (input[i] != '\0')
     {
@@ -137,58 +126,22 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 token.type = TOK_PIPE;
                 break;
             }
-            token.value = NULL;
+            token.value = strdup(input[i] == '<' ? "<" : (input[i] == '>' ? ">" : "|"));
             CL_append(tokens, token);
             i++;
             continue;
         }
 
-        // Handle words, including special cases with quotes
         char temp[256];
         size_t temp_idx = 0;
         int is_quoted = 0;
         int had_quote = 0;
 
-        // Explicit handling for flags starting with '-'
-        if (input[i] == '-') {
-            // Capture entire flag
-            while (input[i] && (input[i] == '-' || isalpha(input[i]))) {
-                temp[temp_idx++] = input[i++];
-            }
-            
-            if (temp_idx > 0) {
-                temp[temp_idx] = '\0';
-                token.type = TOK_WORD;
-                token.value = strdup(temp);
-                CL_append(tokens, token);
-                
-                // Reset for next token
-                temp_idx = 0;
-                memset(temp, 0, sizeof(temp));
-                continue;
-            }
-        }
-
-        // Check for words with or without quotes
+        // Improved quote handling
         while (1)
         {
-            // Handle quoted sections
             if (input[i] == '"')
             {
-                // If we have a word started and then a quote, split into two tokens
-                if (temp_idx > 0 && !is_quoted)
-                {
-                    temp[temp_idx] = '\0';
-                    token.type = TOK_WORD;
-                    token.value = strdup(temp);
-                    CL_append(tokens, token);
-                    
-                    // Reset for next token
-                    temp_idx = 0;
-                    memset(temp, 0, sizeof(temp));
-                }
-
-                // Start or end of a quoted section
                 if (!is_quoted)
                 {
                     is_quoted = 1;
@@ -198,22 +151,16 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                 }
                 else
                 {
-                    // End of quoted section
+                    // Check for EOF while in quotes
+                    if (input[i + 1] == '\0') 
+                    {
+                        snprintf(errmsg, errmsg_sz, "Unterminated quote");
+                        free_token_values(tokens);
+                        return NULL;
+                    }
+                    
                     is_quoted = 0;
                     i++; // Skip closing quote
-                    
-                    // Create quoted word token if we have content
-                    if (temp_idx > 0)
-                    {
-                        temp[temp_idx] = '\0';
-                        token.type = TOK_QUOTED_WORD;
-                        token.value = strdup(temp);
-                        CL_append(tokens, token);
-                        
-                        // Reset for next token
-                        temp_idx = 0;
-                        memset(temp, 0, sizeof(temp));
-                    }
                     break;
                 }
             }
@@ -228,25 +175,25 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
             {
                 if (input[i + 1] == '\0')
                 {
-                    snprintf(errmsg, errmsg_sz, "Illegal escape character ");
-                    CL_free(tokens);
+                    snprintf(errmsg, errmsg_sz, "Illegal escape character");
+                    free_token_values(tokens);
                     return NULL;
                 }
 
-                // Special case for space after backslash
-                if (input[i + 1] == ' ')
-                {
-                    temp[temp_idx++] = ' ';
-                    i += 2;
-                    continue;
-                }
-
-                // Handle other escape sequences
+                // Improved escape sequence handling
                 char escaped = handle_escape_sequence(input[i + 1], errmsg, errmsg_sz);
                 if (escaped == '\0')
                 {
+                    // For quoted strings, allow more characters to be escaped
+                    if (is_quoted)
+                    {
+                        temp[temp_idx++] = input[i + 1];
+                        i += 2;
+                        continue;
+                    }
+                    
                     snprintf(errmsg, errmsg_sz, "Illegal escape character '\\%c'", input[i + 1]);
-                    CL_free(tokens);
+                    free_token_values(tokens);
                     return NULL;
                 }
                 temp[temp_idx++] = escaped;
@@ -283,6 +230,29 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
     Token end_token = {.type = TOK_END, .value = NULL};
     CL_append(tokens, end_token);
     return tokens;
+}
+// Documented in .h file
+void free_token_values(CList tokens)
+{
+    if (tokens == NULL) 
+        return;
+
+    // Iterate through the tokens and free each token's value
+    size_t length = CL_length(tokens);
+    for (size_t i = 0; i < length; i++) 
+    {
+        Token token = CL_nth(tokens, i);
+        
+        // Free the dynamically allocated value string
+        // But only for tokens that have a non-NULL value
+        if (token.value != NULL) 
+        {
+            free(token.value);
+        }
+    }
+
+    // Optional: Clear the list after freeing values
+    CL_free(tokens);
 }
 // Documented in .h file
 TokenType TOK_next_type(CList tokens)
