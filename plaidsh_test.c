@@ -6,7 +6,7 @@
 #include "pipeline.h"
 #include "ast.h"
 #include "clist.h"
-#include "tokenize.h"
+#include "Tokenize.h"
 
 // Helper function to print token details for debugging
 void print_token(const Token* token, int index) {
