@@ -1,33 +1,38 @@
 Welcome to Plaid Shell!
 [?2004h#? 
-[?2004lParsing error: 
-[?2004h#?     
-[?2004lParsing error: 
-[?2004h#?   \  
-[?2004lCommand execution failed: No such file or directory
+[?2004l[?2004h#?     
+[?2004l[?2004h#?   \  
+[?2004lexecvp: No such file or directory
 
 =================================================================
-[1m[31m==3384==ERROR: LeakSanitizer: detected memory leaks
+[1m[31m==4044==ERROR: LeakSanitizer: detected memory leaks
 [1m[0m
 [1m[34mDirect leak of 2 byte(s) in 1 object(s) allocated from:
-[1m[0m    #0 0x7f14c189e4e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
-    #1 0x55b84b4a8d1d in TOK_tokenize_input /mnt/c/Users/robot/Desktop/Assignment12_ISSE/Tokenize.c:251
-    #2 0x55b84b4ab4fa in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:32
-    #3 0x7f14c14811c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 6d64b17fbac799e68da7ebd9985ddf9b5cb375e6)
-    #4 0x7f14c148128a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 6d64b17fbac799e68da7ebd9985ddf9b5cb375e6)
-    #5 0x55b84b4a66c4 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x36c4) (BuildId: 4dc98932e634bcda14b960597f57560e6ad55459)
+[1m[0m    #0 0x7fa9c18224e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
+    #1 0x563c8b089cdd in TOK_tokenize_input /mnt/c/Users/robot/Desktop/Assignment12_ISSE/Tokenize.c:251
+    #2 0x563c8b08c1a4 in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:32
+    #3 0x7fa9c14ee1c9 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+    #4 0x7fa9c14ee28a in __libc_start_main_impl ../csu/libc-start.c:360
+    #5 0x563c8b087684 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x3684) (BuildId: ab21552ba8d1f989bd9c6b930eb83db5a57f134a)
 
 SUMMARY: AddressSanitizer: 2 byte(s) leaked in 1 allocation(s).
 [?2004h#? pwd
 [?2004l/mnt/c/Users/robot/Desktop/Assignment12_ISSE
 [?2004h#? ls --color
-[?2004l [0m[01;32mMakefile[0m                  [01;32mast.c[0m     [01;32mparse.h[0m      [01;32mplaidsh.o[0m
-[34;42m'Plaid Shell Playground'[0m   [01;32mast.h[0m     [01;32mparse.o[0m      [01;32mplaidsh_test[0m
- [01;32mREADME.md[0m                 [01;32mast.o[0m     [01;32mpipeline.c[0m   [01;32mplaidsh_test.c[0m
- [01;32mToken.h[0m                   [01;32mclist.c[0m   [01;32mpipeline.h[0m   [01;32mplaidsh_test.log[0m
- [01;32mTokenize.c[0m                [01;32mclist.h[0m   [01;32mpipeline.o[0m   [01;32mplaidsh_test.o[0m
- [01;32mTokenize.h[0m                [01;32mclist.o[0m   [01;32mplaidsh[0m      [01;32mplaidsh_test.py[0m
- [01;32mTokenize.o[0m                [01;32mparse.c[0m   [01;32mplaidsh.c[0m    [01;32msetup_playground.sh[0m
+[?2004lexecvp: Bad address
+
+=================================================================
+[1m[31m==4046==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 17 byte(s) in 4 object(s) allocated from:
+[1m[0m    #0 0x7fa9c18224e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
+    #1 0x563c8b089cdd in TOK_tokenize_input /mnt/c/Users/robot/Desktop/Assignment12_ISSE/Tokenize.c:251
+    #2 0x563c8b08c1a4 in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:32
+    #3 0x7fa9c14ee1c9 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+    #4 0x7fa9c14ee28a in __libc_start_main_impl ../csu/libc-start.c:360
+    #5 0x563c8b087684 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x3684) (BuildId: ab21552ba8d1f989bd9c6b930eb83db5a57f134a)
+
+SUMMARY: AddressSanitizer: 17 byte(s) leaked in 4 allocation(s).
 [?2004h#? /mnt/c/Users/robot/Desktop/Assignment12_ISSE/setup_playground.sh
 [?2004lPlaid Shell playground created
 [?2004h#? cd Plaid\ Shell\ Playground
@@ -36,22 +41,86 @@ SUMMARY: AddressSanitizer: 2 byte(s) leaked in 1 allocation(s).
 [?2004h#? ls
 [?2004l README  'best sitcoms.txt'  'seven dwarfs.txt'   shells.txt
 [?2004h#? ls *.txt
-[?2004l'best sitcoms.txt'  'seven dwarfs.txt'	 shells.txt
+[?2004lexecvp: Bad address
+
+=================================================================
+[1m[31m==4056==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 124 byte(s) in 11 object(s) allocated from:
+[1m[0m    #0 0x7fa9c18224e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
+    #1 0x563c8b089cdd in TOK_tokenize_input /mnt/c/Users/robot/Desktop/Assignment12_ISSE/Tokenize.c:251
+    #2 0x563c8b08c1a4 in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:32
+    #3 0x7fa9c14ee1c9 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+    #4 0x7fa9c14ee28a in __libc_start_main_impl ../csu/libc-start.c:360
+    #5 0x563c8b087684 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x3684) (BuildId: ab21552ba8d1f989bd9c6b930eb83db5a57f134a)
+
+SUMMARY: AddressSanitizer: 124 byte(s) leaked in 11 allocation(s).
 [?2004h#? echo $PATH
-[?2004l$PATH
+[?2004lexecvp: Bad address
+
+=================================================================
+[1m[31m==4058==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 135 byte(s) in 13 object(s) allocated from:
+[1m[0m    #0 0x7fa9c18224e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
+    #1 0x563c8b089cdd in TOK_tokenize_input /mnt/c/Users/robot/Desktop/Assignment12_ISSE/Tokenize.c:251
+    #2 0x563c8b08c1a4 in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:32
+    #3 0x7fa9c14ee1c9 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+    #4 0x7fa9c14ee28a in __libc_start_main_impl ../csu/libc-start.c:360
+    #5 0x563c8b087684 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x3684) (BuildId: ab21552ba8d1f989bd9c6b930eb83db5a57f134a)
+
+SUMMARY: AddressSanitizer: 135 byte(s) leaked in 13 allocation(s).
 [?2004h#? author
 [?2004lUwase Pauline
 [?2004h#? author | sed -e "s/^/Written by /"
-[?2004lUwase Pauline
+[?2004lAddressSanitizer:DEADLYSIGNAL
+=================================================================
+[1m[31m==4043==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fa9c164eb83 bp 0x7fff963a9cc0 sp 0x7fff963a9438 T0)
+[1m[0m==4043==The signal is caused by a READ memory access.
+==4043==Hint: address points to the zero page.
+    #0 0x7fa9c164eb83 in __strchr_avx2 ../sysdeps/x86_64/multiarch/strchr-avx2.S:67
+    #1 0x7fa9c17adebc in strchr ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:709
+    #2 0x563c8b08b0f2 in parse_tokens /mnt/c/Users/robot/Desktop/Assignment12_ISSE/parse.c:45
+    #3 0x563c8b08c230 in main /mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh.c:40
+    #4 0x7fa9c14ee1c9 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+    #5 0x7fa9c14ee28a in __libc_start_main_impl ../csu/libc-start.c:360
+    #6 0x563c8b087684 in _start (/mnt/c/Users/robot/Desktop/Assignment12_ISSE/plaidsh+0x3684) (BuildId: ab21552ba8d1f989bd9c6b930eb83db5a57f134a)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV ../sysdeps/x86_64/multiarch/strchr-avx2.S:67 in __strchr_avx2
+==4043==ABORTING
 grep Happy *.txt
-Written by grep Happy *.txt
 cat "best sitcoms.txt" | grep Seinfeld
-Written by cat "best sitcoms.txt" | grep Seinfeld
 cat "best sitcoms.txt"|grep Seinfeld|wc -l
-Written by cat "best sitcoms.txt"|grep Seinfeld|wc -l
 sed -ne "s/The Simpsons/I Love Lucy/p" < best\ sitcoms.txt > output
-Written by sed -ne "s/The Simpsons/I Love Lucy/p" < best\ sitcoms.txt > output
 ls -l
-Written by ls -l
 cat output
-Written by cat output
+this is not a command
+echo Hello > /usr/bin/cant_write
+cd
+pwd
+cd /mnt/c/Users/robot/Desktop/Assignment12_ISSE
+pwd
+cd ~
+pwd
+echo "Operator could you help me place this call?"
+seq 10 | wc"-l"
+^[[A^[[A
+env	|grep PATH
+echo Hello World | cat -n | cat -n | cat -n
+echo \c
+echo "\c"
+echo "hi
+echo "|1|2|3|" | sed -e "s/[0-9]//g"
+printf "=%s=\n" one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four|wc -l
+printf"+%s"one"two"three
+
+echo > file1 >file2
+cat <
+cat | cat | cat >
+grep | 
+| grep
+echo || grep
+echo \<\|\> | cat
+echo hello\|grep ell
+exit

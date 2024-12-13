@@ -105,6 +105,12 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
     CList tokens = CL_new();
     size_t i = 0;
 
+    if (input == NULL) {
+        snprintf(errmsg, errmsg_sz, "Null input provided");
+        return NULL;
+    }
+
+
     while (input[i] != '\0')
     {
         // Skip whitespace
@@ -142,6 +148,26 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
         size_t temp_idx = 0;
         int is_quoted = 0;
         int had_quote = 0;
+
+        // Explicit handling for flags starting with '-'
+        if (input[i] == '-') {
+            // Capture entire flag
+            while (input[i] && (input[i] == '-' || isalpha(input[i]))) {
+                temp[temp_idx++] = input[i++];
+            }
+            
+            if (temp_idx > 0) {
+                temp[temp_idx] = '\0';
+                token.type = TOK_WORD;
+                token.value = strdup(temp);
+                CL_append(tokens, token);
+                
+                // Reset for next token
+                temp_idx = 0;
+                memset(temp, 0, sizeof(temp));
+                continue;
+            }
+        }
 
         // Check for words with or without quotes
         while (1)
