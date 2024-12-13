@@ -67,7 +67,7 @@ int handle_redirection(char **args) {
 }
 
 // Function to execute the pipeline
-void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
+int execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size) {
     Pipeline *current = pipeline; 
     int pipe_fds[2];
     int prev_pipe_fd = -1;

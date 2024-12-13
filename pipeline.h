@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 // Function declarations
-void execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size);
+int execute_pipeline(Pipeline *pipeline, char *errmsg, size_t errmsg_size);
 int handle_builtin_commands(Command *cmd);
 int handle_redirection(char **args);
 
